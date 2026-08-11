@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FOODBRIDGE AI - AI-Powered Food Rescue Network</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/premium.css">
+    <style>
+        .hero-premium {
+            background-image: url('images/hero-food.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        .hero-ai-visual {
+            position: relative;
+        }
+        .hero-ai-visual::before {
+            content: '';
+            position: absolute;
+            inset: -20px;
+            border-radius: 32px;
+            background: linear-gradient(135deg, rgba(16,185,129,0.16), rgba(59,130,246,0.12));
+            filter: blur(40px);
+            pointer-events: none;
+        }
+        .stat-counter {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+        .floating-donate-card {
+            position: fixed;
+            right: 24px;
+            bottom: 100px;
+            width: 240px;
+            background: linear-gradient(135deg, rgba(16,185,129,0.16), rgba(59,130,246,0.12));
+            border: 1px solid rgba(16,185,129,0.3);
+            border-radius: 20px;
+            padding: 16px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 20px 50px -20px rgba(16,185,129,0.4);
+            z-index: 1100;
+            animation: floatCard 5s ease-in-out infinite;
+            transition: transform 0.3s ease;
+        }
+        .floating-donate-card:hover {
+            transform: translateY(-4px) scale(1.02);
+        }
+        @keyframes floatCard {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        @media (max-width: 992px) {
+            .floating-donate-card {
+                display: none;
+            }
+        }
+        .timeline-vertical {
+            position: relative;
+            padding-left: 40px;
+        }
+        .timeline-vertical::before {
+            content: '';
+            position: absolute;
+            left: 14px;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, var(--accent-emerald), var(--accent-blue));
+            border-radius: 999px;
+        }
+        .timeline-step {
+            position: relative;
+            margin-bottom: 24px;
+        }
+        .timeline-step::before {
+            content: '';
+            position: absolute;
+            left: -32px;
+            top: 6px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent-emerald);
+            border: 2px solid white;
+            box-shadow: 0 0 0 4px rgba(16,185,129,0.2);
+        }
+        .partner-logo {
+            padding: 14px 20px;
+            border-radius: 16px;
+            background: var(--glass-bg);
+            border: 1px solid var(--border-color);
+            font-weight: 800;
+            font-size: 1.1rem;
+            letter-spacing: -0.02em;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .partner-logo:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--card-shadow-hover);
+            border-color: var(--border-glow);
+        }
+        .impact-orb {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(16,185,129,0.16), rgba(59,130,246,0.16));
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body class="premium-body">
+<a class="skip-link" href="#main-content">Skip to content</a>
+
+<!-- FLOATING GLASSNAV -->
+<nav class="navbar navbar-expand-lg navbar-floating">
+    <div class="container-fluid">
+        <a class="navbar-brand fb-brand" href="index.html">
+            <span class="fb-logo">
+                <span class="fb-logo-inner">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 21s-7-4.6-9.3-9A5.4 5.4 0 0 1 12 6.6 5.4 5.4 0 0 1 21.3 12C19 16.4 12 21 12 21Z"
+                              fill="url(#fbLeafG)"/>
+                        <path d="M12 21s7-4.6 9.3-9A5.4 5.4 0 0 0 12 6.6" fill="url(#fbLeafB)" opacity=".9"/>
+                        <defs>
+                            <linearGradient id="fbLeafG" x1="3" y1="3" x2="15" y2="21">
+                                <stop stop-color="#22C55E"/><stop offset="1" stop-color="#16A34A"/>
+                            </linearGradient>
+                            <linearGradient id="fbLeafB" x1="21" y1="3" x2="12" y2="21">
+                                <stop stop-color="#14B8A6"/><stop offset="1" stop-color="#0d9488"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </span>
+            </span>
+            <span class="fb-brand-text">
+                <span class="fb-wordmark">
+                    <span class="fb-g">FOOD</span><span class="fb-b">BRIDGE</span>
+                    <span class="fb-ai-badge">AI</span>
+                </span>
+                <span class="fb-tagline">REDUCE WASTE. FEED HOPE. CREATE IMPACT.</span>
+            </span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="menu">
+            <!-- Dynamic navbar content populated by script.js -->
+        </div>
+    </div>
+</nav>
+
+<!-- FLOATING DONATE CARD -->
+<div class="floating-donate-card d-none d-lg-block">
+    <div class="fw-bold text-success small mb-1">🍲 Have surplus food?</div>
+    <p class="small text-secondary mb-2">Donate now & AI will match you with nearby NGOs instantly.</p>
+    <a href="donate.html" class="btn btn-success btn-sm w-100 rounded-pill fw-bold">Donate Food 🚀</a>
+</div>
+
+<main id="main-content">
+<!-- HERO SECTION -->
+<section class="hero-premium">
+    <div class="container">
+        <div class="row align-items-center g-5 mt-2">
+            <div class="col-lg-6 text-center text-lg-start animate-fade-in">
+                <div class="hero-pill-premium">⚡ Real-Time AI Food Rescue Platform</div>
+                <h1 class="display-4 fw-extrabold mb-3">Turn surplus food into <span class="gradient-text-emerald">nourishment & trust</span>.</h1>
+                <p class="hero-subtitle lead text-secondary mb-4">
+                    FOODBRIDGE AI uses smart match algorithms to connect surplus food donors with verified local NGOs across all of India in minutes.
+                </p>
+                <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center justify-content-lg-start mb-4">
+                    <a href="donate.html" class="btn btn-success btn-lg px-4 py-3 rounded-pill fw-bold shadow">
+                        Donate Surplus Food 🍲
+                    </a>
+                    <a href="hunger-map.html" class="btn btn-outline-success btn-lg px-4 py-3 rounded-pill fw-bold">
+                        Explore Live Hunger Map 🗺️
+                    </a>
+                </div>
+                <div class="hero-stats row g-3">
+                    <div class="col-sm-4">
+                        <div class="glass-card-premium p-3 text-center">
+                            <div class="stat-counter text-success" data-count="1280" data-suffix="+">0</div>
+                            <div class="text-muted small fw-semibold">Meals Redirected</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="glass-card-premium p-3 text-center">
+                            <div class="stat-counter text-primary" data-count="94" data-suffix="+">0</div>
+                            <div class="text-muted small fw-semibold">NGO Partners</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="glass-card-premium p-3 text-center">
+                            <div class="stat-counter text-warning" data-count="28" data-suffix="">0</div>
+                            <div class="text-muted small fw-semibold">States Covered</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 animate-fade-in hero-ai-visual" style="animation-delay: 0.1s;">
+                <div class="glass-card-premium p-4 gradient-card-emerald">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="fw-bold text-success fs-5">🤖 AI Rescue Engine</div>
+                        <span class="badge bg-success rounded-pill">Active Live Queue</span>
+                    </div>
+
+                    <div class="glass-card-premium p-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong class="text-primary">Hotel Srinivas (Mumbai)</strong>
+                            <span class="badge bg-success-subtle text-success">98% AI Match</span>
+                        </div>
+                        <p class="mb-2 text-secondary small">40 Fresh Biryani Meals ready for immediate distribution.</p>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-success rounded" style="width: 98%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card-premium p-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold text-primary">Estimated Pickup ETA</span>
+                            <span class="text-success fw-bold">12 minutes</span>
+                        </div>
+                        <small class="text-muted">Route optimized via Annapurna Rescue Fleet</small>
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="glass-card-premium p-3 text-center">
+                                <div class="impact-orb">🏆</div>
+                                <div class="fw-bold text-success" data-count="99" data-suffix="%">0</div>
+                                <small class="text-muted">Dispatch Precision</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="glass-card-premium p-3 text-center">
+                                <div class="impact-orb">⚡</div>
+                                <div class="fw-bold text-primary" data-count="60" data-suffix="s">0</div>
+                                <small class="text-muted">Avg. Listing Time</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURES SECTION -->
+<section class="section-shell" id="features">
+    <div class="container">
+        <div class="text-center mb-5 reveal">
+            <span class="hero-pill-premium">🚀 Why Organizations Trust FOODBRIDGE AI</span>
+            <h2 class="fw-bold display-6 mt-2">Built for Speed, Accuracy & Transparency</h2>
+            <p class="text-secondary mx-auto mt-3" style="max-width: 720px;">From donation capture to community impact, the experience feels as premium as the mission itself.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4 reveal">
+                <div class="glass-card-premium p-4 h-100 text-center">
+                    <div class="fs-1 mb-3">🍱</div>
+                    <h4 class="fw-bold text-success mb-2">Instant Donation Intake</h4>
+                    <p class="text-secondary small">Post surplus food listings in under 60 seconds with location, quantity, and urgency details.</p>
+                </div>
+            </div>
+            <div class="col-md-4 reveal">
+                <div class="glass-card-premium p-4 h-100 text-center gradient-card-emerald">
+                    <div class="fs-1 mb-3">🧠</div>
+                    <h4 class="fw-bold text-success mb-2">Smart NGO Matching</h4>
+                    <p class="text-secondary small">AI recommendations rank the best rescue partners by distance, urgency, capacity, and food preferences.</p>
+                </div>
+            </div>
+            <div class="col-md-4 reveal">
+                <div class="glass-card-premium p-4 h-100 text-center">
+                    <div class="fs-1 mb-3">🗺️</div>
+                    <h4 class="fw-bold text-success mb-2">All-India Live Map</h4>
+                    <p class="text-secondary small">Track donations, NGO coverage, pickups, and deliveries across every state in a dynamic, responsive map view.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ALL-INDIA IMPACT STATS -->
+<section class="section-shell pt-0">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-xl-3 col-md-6 reveal">
+                <div class="glass-card-premium p-4 text-center h-100 gradient-card-emerald">
+                    <div class="impact-orb">🍲</div>
+                    <div class="display-5 fw-extrabold text-success" data-count="15230" data-suffix="+">0</div>
+                    <div class="text-secondary small fw-bold">Food Donations</div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 reveal">
+                <div class="glass-card-premium p-4 text-center h-100 gradient-card-blue">
+                    <div class="impact-orb">👥</div>
+                    <div class="display-5 fw-extrabold text-primary" data-count="41200" data-suffix="+">0</div>
+                    <div class="text-secondary small fw-bold">People Fed</div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 reveal">
+                <div class="glass-card-premium p-4 text-center h-100 gradient-card-amber">
+                    <div class="impact-orb">⚖️</div>
+                    <div class="display-5 fw-extrabold text-warning" data-count="8910" data-suffix="kg">0</div>
+                    <div class="text-secondary small fw-bold">Food Saved</div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 reveal">
+                <div class="glass-card-premium p-4 text-center h-100 gradient-card-emerald">
+                    <div class="impact-orb">🌍</div>
+                    <div class="display-5 fw-extrabold text-success" data-count="22275" data-suffix="kg">0</div>
+                    <div class="text-secondary small fw-bold">CO₂ Prevented</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- HOW IT WORKS / TIMELINE -->
+<section class="section-shell pt-0" id="how-it-works">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-5 reveal">
+                <span class="hero-pill-premium">🔄 3-Minute Rescue Flow</span>
+                <h2 class="fw-bold display-6 mb-3">From Surplus to Saved</h2>
+                <p class="text-secondary mb-4">Our platform transforms food waste into community nourishment with a streamlined, intelligent workflow.</p>
+                <a href="signup.html" class="btn btn-success px-4 py-3 rounded-pill fw-bold">Start Rescuing Food 🚀</a>
+            </div>
+            <div class="col-lg-7 reveal">
+                <div class="glass-card-premium p-4 p-md-5">
+                    <div class="timeline-vertical">
+                        <div class="timeline-step">
+                            <h6 class="fw-bold text-success mb-1">1. List Surplus Food</h6>
+                            <p class="text-secondary small mb-0">Share pickup details, food type, quantity, and urgency instantly through a streamlined form with GPS detection.</p>
+                        </div>
+                        <div class="timeline-step">
+                            <h6 class="fw-bold text-success mb-1">2. AI Ranks Recipients</h6>
+                            <p class="text-secondary small mb-0">Every NGO is evaluated for proximity, capacity, food preferences, availability, traffic, and weather.</p>
+                        </div>
+                        <div class="timeline-step">
+                            <h6 class="fw-bold text-success mb-1">3. NGO Accepts & Picks Up</h6>
+                            <p class="text-secondary small mb-0">The best-matched NGO receives an instant notification and dispatches a rescue vehicle.</p>
+                        </div>
+                        <div class="timeline-step">
+                            <h6 class="fw-bold text-success mb-1">4. Track Impact Live</h6>
+                            <p class="text-secondary small mb-0">Everyone sees the rescue journey from intake to delivery — with meals fed and CO₂ prevented.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- NGO PARTNERS -->
+<section class="section-shell pt-0">
+    <div class="container">
+        <div class="glass-card-premium p-4 p-md-5 reveal">
+            <div class="text-center mb-4">
+                <span class="hero-pill-premium">🤝 Trusted by rescue partners nationwide</span>
+                <h3 class="fw-bold text-success mt-2 mb-3">NGOs & Communities We Empower</h3>
+            </div>
+            <div class="d-flex flex-wrap justify-content-center gap-3">
+                <span class="partner-logo">🏢 Annapurna Trust</span>
+                <span class="partner-logo">🌾 Save Food India</span>
+                <span class="partner-logo">🤝 Hunger Relief Foundation</span>
+                <span class="partner-logo">👥 Youth Helping Hands</span>
+                <span class="partner-logo">💚 Mercy Feeding Center</span>
+                <span class="partner-logo">🫶 Robin Hood Army</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- QUICK DONATION + LIVE LISTINGS -->
+<section class="py-5" id="donateSection">
+    <div class="container">
+        <div class="row justify-content-center g-4">
+            <div class="col-lg-5">
+                <div class="glass-card-premium p-4 h-100 border-success reveal">
+                    <h3 class="fw-bold text-success text-center mb-4">Quick Donation Form</h3>
+
+                    <div class="floating-form-group">
+                        <label for="foodName" class="form-label fw-bold text-secondary">Food Details</label>
+                        <input id="foodName" class="form-control-premium" placeholder="e.g. Rice Meals, Bakery Loaves">
+                    </div>
+
+                    <div class="floating-form-group">
+                        <label for="quantity" class="form-label fw-bold text-secondary">Quantity</label>
+                        <input id="quantity" class="form-control-premium" placeholder="e.g. 25 plates, 10 kg">
+                    </div>
+
+                    <div class="floating-form-group mb-4">
+                        <label for="location" class="form-label fw-bold text-secondary">Pickup Location</label>
+                        <input id="location" class="form-control-premium" placeholder="e.g. Andheri, Mumbai">
+                    </div>
+
+                    <button class="btn btn-success w-100 py-3 rounded-pill fw-bold shadow" onclick="submitDonation()">
+                        Post Donation Listing 🌱
+                    </button>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="glass-card-premium p-4 h-100 reveal">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="fw-bold text-success m-0">🛒 Live Community Board</h4>
+                        <span class="badge bg-success-subtle text-success rounded-pill">Updating Live</span>
+                    </div>
+                    <div id="donationList" class="row g-3">
+                        <!-- Loaded dynamically by script.js -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- TESTIMONIALS + FAQ -->
+<section class="section-shell pt-0">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-6 reveal">
+                <div class="glass-card-premium p-4 h-100">
+                    <span class="hero-pill-premium mb-3">💬 Community Voices</span>
+                    <h4 class="fw-bold text-success mb-4">What partners are saying</h4>
+                    <div class="testimonial-card mb-3">
+                        <p class="text-secondary mb-3">"The interface is so calm and decisive. Our volunteer team moved from manual coordination to real-time rescue flows in one afternoon."</p>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="avatar-orb"></div>
+                            <div>
+                                <div class="fw-bold text-success">Ananya Rao</div>
+                                <small class="text-muted">Operations Lead, Food Bridge</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="testimonial-card">
+                        <p class="text-secondary mb-3">"It feels like an AI product built for impact, not just dashboards. The experience is remarkably clear and trustworthy."</p>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="avatar-orb"></div>
+                            <div>
+                                <div class="fw-bold text-success">Mina Shah</div>
+                                <small class="text-muted">NGO Program Manager</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 reveal">
+                <div class="glass-card-premium p-4 h-100">
+                    <span class="hero-pill-premium mb-3">❓ Quick Answers</span>
+                    <h4 class="fw-bold text-success mb-4">Frequently asked questions</h4>
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item border-0 mb-2 rounded-4 overflow-hidden">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq-one">
+                                    How quickly can a donation be matched?
+                                </button>
+                            </h2>
+                            <div id="faq-one" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body text-secondary">Most donations are surfaced to nearby NGOs within minutes, depending on location and latest volunteer availability.</div>
+                            </div>
+                        </div>
+                        <div class="accordion-item border-0 mb-2 rounded-4 overflow-hidden">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq-two">
+                                    Does the platform work across India?
+                                </button>
+                            </h2>
+                            <div id="faq-two" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body text-secondary">Yes! The platform supports every state in India. All addresses are automatically geocoded into GPS coordinates for real-time mapping.</div>
+                            </div>
+                        </div>
+                        <div class="accordion-item border-0 mb-2 rounded-4 overflow-hidden">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq-three">
+                                    Can the experience work on mobile?
+                                </button>
+                            </h2>
+                            <div id="faq-three" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body text-secondary">Yes. The layout is optimized for desktop, tablet, and mobile so teams can respond even when they are on the road.</div>
+                            </div>
+                        </div>
+                        <div class="accordion-item border-0 rounded-4 overflow-hidden">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq-four">
+                                    How does AI matching work?
+                                </button>
+                            </h2>
+                            <div id="faq-four" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body text-secondary">Our AI engine scores every NGO based on GPS distance, food category preference, quantity capacity, expiry urgency, availability, traffic, and weather — ranking the best match automatically.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FINAL CTA -->
+<section class="section-shell pt-0">
+    <div class="container">
+        <div class="glass-card-premium p-4 p-md-5 text-center reveal gradient-card-emerald">
+            <span class="hero-pill-premium">🌎 Ready to transform food rescue?</span>
+            <h3 class="fw-bold display-6 text-success mb-3">Bring AI precision to your community operations.</h3>
+            <p class="text-secondary mb-4">Join donors, NGOs, and civic leaders in one elegant All-India rescue network.</p>
+            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a href="signup.html" class="btn btn-success px-4 py-3">Create Free Account</a>
+                <a href="hunger-map.html" class="btn btn-outline-success px-4 py-3">Explore Live Map</a>
+                <a href="donate.html" class="btn btn-outline-success px-4 py-3">Donate Now 🍲</a>
+            </div>
+        </div>
+    </div>
+</section>
+</main>
+
+<footer class="py-4 mt-auto border-top">
+    <div class="container text-center">
+        <p class="text-muted mb-0">🌱 FOODBRIDGE AI &copy; 2026. Empowering communities to end food waste.</p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/script.js"></script>
+</body>
+</html>

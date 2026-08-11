@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NGO Rescue Portal - FOODBRIDGE AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/premium.css">
+    <!-- Leaflet CSS for Mini Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+</head>
+
+<body class="premium-body dashboard-page d-flex flex-column min-vh-100">
+
+<!-- FOODBRIDGE HERO BACKGROUND (fixed photo + dark navy overlay, see premium.css section 13) -->
+<div class="dashboard-bg-layer"></div>
+
+<!-- FLOATING GLASSNAV -->
+<nav class="navbar navbar-expand-lg navbar-floating">
+    <div class="container-fluid px-0">
+        <button class="btn btn-light me-2 border d-lg-none" onclick="toggleSidebar()">☰</button>
+        <a class="navbar-brand fb-brand" href="index.html">
+            <img src="images/foodbridge.logo.png" alt="FOODBRIDGE AI Logo" class="fb-logo-img">
+            <span class="fb-brand-text">
+                <span class="fb-wordmark">
+                    <span class="fb-g">FOOD</span><span class="fb-b">BRIDGE</span>
+                    <span class="fb-ai-badge">AI</span>
+                </span>
+                <span class="fb-tagline">REDUCE WASTE. FEED HOPE. CREATE IMPACT.</span>
+            </span>
+        </a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#menu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="menu">
+            <!-- Dynamic navbar content populated by script.js -->
+        </div>
+    </div>
+</nav>
+
+<div class="app-layout">
+    <!-- COLLAPSIBLE SIDEBAR -->
+    <aside class="sidebar-wrapper">
+        <div class="p-3 border-bottom d-flex align-items-center justify-content-between">
+            <span class="fw-bold text-success sidebar-header-title">🏢 NGO Workspace</span>
+            <button class="btn btn-sm btn-light border" onclick="toggleSidebar()" title="Toggle Sidebar">◀</button>
+        </div>
+        <ul class="sidebar-nav">
+            <li class="sidebar-nav-item">
+                <a href="ngo-dashboard.html" class="sidebar-nav-link active">
+                    <span class="sidebar-nav-icon">📋</span>
+                    <span class="sidebar-text">Kanban Dispatch</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="findfood.html" class="sidebar-nav-link">
+                    <span class="sidebar-nav-icon">🍱</span>
+                    <span class="sidebar-text">Browse Food</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="hunger-map.html" class="sidebar-nav-link">
+                    <span class="sidebar-nav-icon">🗺️</span>
+                    <span class="sidebar-text">Live Hunger Map</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="profile.html" class="sidebar-nav-link">
+                    <span class="sidebar-nav-icon">👤</span>
+                    <span class="sidebar-text">NGO Profile</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="main-content-with-sidebar">
+        <div class="dashboard-hero glass-card-premium p-4 p-lg-5 mb-4 reveal position-relative">
+            <div class="aurora-ring"></div>
+            <div class="row g-4 align-items-center">
+                <div class="col-lg-8">
+                    <span class="hero-pill-premium mb-3">🚚 AI dispatch console</span>
+                     <h1 class="fw-extrabold display-6 mb-2">NGO <span class="text-green-accent">Rescue Fleet</span> Kanban</h1>
+                    <p class="text-secondary mb-4">Track real-time distribution workflow with a calmer, more premium view of accepted claims, pickups, and deliveries.</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-success btn-sm rounded-pill px-3" onclick="loadNGOData()">🔄 Refresh listings</button>
+                        <a href="hunger-map.html" class="btn btn-outline-success btn-sm rounded-pill px-3">View live map</a>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="dispatch-card">
+                        <div class="premium-chip mb-2">Priority queue</div>
+                        <div class="display-6 fw-extrabold text-success" id="priorityQueueCount">0 urgent</div>
+                        <p class="small text-secondary mb-3">High-urgency pickups are highlighted for faster handoff and delivery.</p>
+                        <div class="dashboard-progress-row">
+                            <div>
+                                <div class="d-flex justify-content-between small mb-1"><span class="fw-semibold">Dispatch speed</span><span class="text-success">96%</span></div>
+                                <div class="progress"><div class="progress-bar bg-success rounded" style="width: 96%"></div></div>
+                            </div>
+                            <div>
+                                <div class="d-flex justify-content-between small mb-1"><span class="fw-semibold">Route confidence</span><span class="text-primary">92%</span></div>
+                                <div class="progress"><div class="progress-bar bg-primary rounded" style="width: 92%"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STATS CARDS -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4 reveal">
+                <div class="glass-card-premium p-4 gradient-card-emerald text-center">
+                    <div class="text-secondary fw-bold small mb-1">Total claims accepted</div>
+                    <div class="display-5 fw-extrabold text-success" id="ngo-stats-total">0</div>
+                </div>
+            </div>
+             <div class="col-md-4 reveal">
+                 <div class="glass-card-premium p-4 gradient-card-emerald text-center">
+                     <div class="text-secondary fw-bold small mb-1">Pending pickups in transit</div>
+                     <div class="display-5 fw-extrabold text-success" id="ngo-stats-pending">0</div>
+                 </div>
+             </div>
+             <div class="col-md-4 reveal">
+                 <div class="glass-card-premium p-4 gradient-card-emerald text-center">
+                     <div class="text-secondary fw-bold small mb-1">Completed deliveries</div>
+                     <div class="display-5 fw-extrabold text-success" id="ngo-stats-delivered">0</div>
+                 </div>
+             </div>
+        </div>
+
+        <!-- SEARCH + ROUTE OPTIMIZER + MINI MAP ROW -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-4 reveal">
+                <div class="route-optimizer-card h-100">
+                    <div class="fw-bold text-success mb-2">🚚 Route Optimizer</div>
+                    <p class="small text-secondary mb-2">AI optimized pickup sequence for pending deliveries.</p>
+                    <div id="routeOptimizationList" class="mb-3">
+                        <p class="text-muted small mb-0">Loading optimal route...</p>
+                    </div>
+                    <button class="btn btn-success btn-sm w-100 rounded-pill fw-bold" onclick="loadNGOData()">Recalculate Route 🔄</button>
+                </div>
+            </div>
+            <div class="col-lg-8 reveal">
+                <div class="glass-card-premium p-3 h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="fw-bold text-success">🗺️ Nearby Donations Mini-Map</div>
+                        <span class="premium-chip">Live</span>
+                    </div>
+                    <div id="miniMap"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card-premium p-3 mb-4 reveal">
+            <div class="d-flex align-items-center px-2">
+                <span class="fs-5 me-2 text-muted">🔍</span>
+                <input type="text" id="ngoSearchInput" class="form-control border-0 bg-transparent shadow-none text-primary" placeholder="Search food items by title, region, or city...">
+            </div>
+        </div>
+
+        <div id="ngoAvailableList" class="d-none"></div>
+        <div id="ngoClaimsList" class="d-none"></div>
+
+        <!-- KANBAN BOARD -->
+        <div class="glass-card-premium p-3 p-md-4 reveal">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold text-success mb-0">Active rescue workflow</h5>
+                <div class="d-flex flex-wrap gap-2">
+                    <span class="premium-chip">Live queue</span>
+                    <span class="premium-chip">AI scoring enabled</span>
+                </div>
+            </div>
+            <div class="kanban-board">
+                <div class="kanban-column">
+                    <div class="kanban-header">
+                        <div class="kanban-header-title text-success">
+                            <span>🛒 Available Food</span>
+                            <span class="kanban-counter" id="cntAvailable">0</span>
+                        </div>
+                    </div>
+                    <div class="kanban-cards-container" id="kanbanAvailable"></div>
+                </div>
+
+                <div class="kanban-column">
+                    <div class="kanban-header">
+                        <div class="kanban-header-title text-warning">
+                            <span>🤝 Accepted Claims</span>
+                            <span class="kanban-counter" id="cntAccepted">0</span>
+                        </div>
+                    </div>
+                    <div class="kanban-cards-container" id="kanbanAccepted"></div>
+                </div>
+
+                <div class="kanban-column">
+                    <div class="kanban-header">
+                        <div class="kanban-header-title text-info">
+                            <span>🚚 Picked Up (Transit)</span>
+                            <span class="kanban-counter" id="cntPickedUp">0</span>
+                        </div>
+                    </div>
+                    <div class="kanban-cards-container" id="kanbanPickedUp"></div>
+                </div>
+
+                <div class="kanban-column">
+                    <div class="kanban-header">
+                        <div class="kanban-header-title text-success">
+                            <span>✅ Delivered</span>
+                            <span class="kanban-counter" id="cntDelivered">0</span>
+                        </div>
+                    </div>
+                    <div class="kanban-cards-container" id="kanbanDelivered"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- DONOR DETAILS MODAL -->
+<div class="modal fade" id="donorDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-card-premium border-0 p-3">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-success" id="donorModalTitle">📞 Donor Contact Information</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pt-3">
+                <div id="donorModalContent">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary px-4 btn-sm rounded-pill" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="py-4 mt-auto border-top">
+    <div class="container text-center">
+        <p class="text-muted mb-0">🌱 FOODBRIDGE AI &copy; 2026. Empowering communities to end food waste.</p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="js/script.js"></script>
+<script>
+    let miniMap;
+    let miniMarkersLayer;
+
+    // Initialize Mini Map after page load
+    window.addEventListener('DOMContentLoaded', () => {
+        if (typeof L !== 'undefined' && document.getElementById('miniMap')) {
+            miniMap = L.map('miniMap').setView([20.5937, 78.9629], 4.5);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(miniMap);
+            miniMarkersLayer = L.featureGroup().addTo(miniMap);
+        }
+    });
+
+    // Render mini map markers from loaded donations (called after loadNGOData)
+    function updateMiniMap(allDonations) {
+        if (!miniMap || !miniMarkersLayer) return;
+        miniMarkersLayer.clearLayers();
+
+        const markers = [];
+        (allDonations || []).forEach(d => {
+            if (d.latitude && d.longitude) {
+                const marker = L.marker([parseFloat(d.latitude), parseFloat(d.longitude)], {
+                    title: d.foodName
+                }).bindPopup(`<strong>🍱 ${d.foodName}</strong><br><small>${d.location || ''}</small>`);
+                miniMarkersLayer.addLayer(marker);
+                markers.push([parseFloat(d.latitude), parseFloat(d.longitude)]);
+            }
+        });
+
+        if (markers.length > 0) {
+            miniMap.fitBounds(miniMarkersLayer.getBounds(), { padding: [20, 20], maxZoom: 8 });
+        }
+    }
+
+    // Update route optimizer with pending pickups
+    function updateRouteOptimizer(claimedList) {
+        const container = document.getElementById('routeOptimizationList');
+        if (!container) return;
+
+        const pending = (claimedList || []).filter(d => d.status === 'accepted' || d.status === 'picked up');
+        const priorityCount = document.getElementById('priorityQueueCount');
+        if (priorityCount) {
+            priorityCount.textContent = `${pending.length} urgent`;
+        }
+
+        if (pending.length === 0) {
+            container.innerHTML = '<div class="glass-card-premium p-3 text-center small text-muted">No pending pickups. Route is clear! ✨</div>';
+            return;
+        }
+
+        // Simple route optimization: sort by distance (nearest first based on lat/lng if available)
+        const sorted = [...pending].sort((a, b) => {
+            if (a.latitude && b.latitude) {
+                return Math.abs(a.latitude - 20.5937) - Math.abs(b.latitude - 20.5937);
+            }
+            return 0;
+        });
+
+        container.innerHTML = sorted.slice(0, 4).map((item, i) => `
+            <div class="glass-card-premium p-2 mb-2 d-flex align-items-center gap-2" style="border-radius: 10px;">
+                <span class="badge bg-success rounded-circle" style="width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center;">${i + 1}</span>
+                <div class="flex-grow-1">
+                    <div class="fw-bold small">${item.foodName}</div>
+                    <small class="text-muted">${item.location || ''}</small>
+                </div>
+                <span class="badge ${item.status === 'picked up' ? 'bg-info' : 'bg-warning text-dark'} rounded-pill text-white">${item.status}</span>
+            </div>
+        `).join('');
+    }
+
+    // Override loadNGOData to also update mini map + route optimzier
+    const originalLoadNGOData = window.loadNGOData;
+    // Keep reference to existing loadNGOData for the script.js integration
+    window._loadNGODataBase = loadNGOData;
+
+    // We'll patch after the fact via delegation since loadNGOData is defined in script.js
+    document.addEventListener('DOMContentLoaded', () => {
+        // Check if we can override the route optimizer after NGO data loads
+        const checkForClaims = setInterval(() => {
+            const historyRes = fetch(`${API_URL}/donations/history`, { headers: getAuthHeaders() });
+            historyRes.then(r => r.json()).then(claims => {
+                updateRouteOptimizer(claims);
+                clearInterval(checkForClaims);
+            }).catch(() => {});
+        }, 500);
+    });
+</script>
+</body>
+</html>

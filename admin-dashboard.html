@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Control Panel - FOODBRIDGE AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/premium.css">
+    <!-- Chart.js for Admin Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+
+<body class="premium-body dashboard-page d-flex flex-column min-vh-100">
+
+<!-- FOODBRIDGE HERO BACKGROUND (fixed photo + dark navy overlay, see premium.css section 13) -->
+<div class="dashboard-bg-layer"></div>
+
+<!-- FLOATING GLASSNAV -->
+<nav class="navbar navbar-expand-lg navbar-floating">
+    <div class="container-fluid px-0">
+        <button class="btn btn-light me-2 border d-lg-none" onclick="toggleSidebar()">☰</button>
+        <a class="navbar-brand fb-brand" href="index.html">
+            <img src="images/foodbridge.logo.png" alt="FOODBRIDGE AI Logo" class="fb-logo-img">
+            <span class="fb-brand-text">
+                <span class="fb-wordmark">
+                    <span class="fb-g">FOOD</span><span class="fb-b">BRIDGE</span>
+                    <span class="fb-ai-badge">AI</span>
+                </span>
+                <span class="fb-tagline">REDUCE WASTE. FEED HOPE. CREATE IMPACT.</span>
+            </span>
+        </a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#menu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="menu">
+            <!-- Dynamic navbar content populated by script.js -->
+        </div>
+    </div>
+</nav>
+
+<div class="app-layout">
+    <!-- COLLAPSIBLE SIDEBAR -->
+    <aside class="sidebar-wrapper">
+        <div class="p-3 border-bottom d-flex align-items-center justify-content-between">
+            <span class="fw-bold text-success sidebar-header-title">🛡️ Admin Controls</span>
+            <button class="btn btn-sm btn-light border" onclick="toggleSidebar()" title="Toggle Sidebar">◀</button>
+        </div>
+        <ul class="sidebar-nav">
+            <li class="sidebar-nav-item">
+                <a href="admin-dashboard.html" class="sidebar-nav-link active">
+                    <span class="sidebar-nav-icon">📊</span>
+                    <span class="sidebar-text">Global Overview</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="findfood.html" class="sidebar-nav-link">
+                    <span class="sidebar-nav-icon">🍱</span>
+                    <span class="sidebar-text">Active Listings</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="hunger-map.html" class="sidebar-nav-link">
+                    <span class="sidebar-nav-icon">🗺️</span>
+                    <span class="sidebar-text">System Map</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="profile.html" class="sidebar-nav-link">
+                    <span class="sidebar-nav-icon">👤</span>
+                    <span class="sidebar-text">My Account</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content-with-sidebar">
+        <div class="dashboard-hero glass-card-premium p-4 p-lg-5 mb-4 reveal position-relative">
+            <div class="aurora-ring"></div>
+            <div class="row g-4 align-items-center">
+                <div class="col-lg-8">
+                    <span class="hero-pill-premium mb-3">🛡️ Admin control center</span>
+                     <h1 class="fw-extrabold display-6 mb-2">Admin <span class="text-green-accent">Control Center</span></h1>
+                    <p class="text-secondary mb-4">System-wide monitoring of listings, users, and food distribution metrics in a polished operations view.</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-success btn-sm rounded-pill px-3" onclick="location.reload()">🔄 Sync records</button>
+                        <a href="dashboard.html" class="btn btn-outline-success btn-sm rounded-pill px-3">Open donor view</a>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="sys-health-card">
+                        <div class="premium-chip mb-2">System health</div>
+                        <div class="display-6 fw-extrabold text-success">Stable</div>
+                        <p class="small text-secondary mb-3">Core services are healthy and the rescue network is operating smoothly.</p>
+                        <div class="sys-health-list">
+                            <div>
+                                <div class="d-flex justify-content-between small mb-1"><span class="fw-semibold">API uptime</span><span class="text-success">99.8%</span></div>
+                                <div class="progress"><div class="progress-bar bg-success rounded" style="width: 99.8%"></div></div>
+                            </div>
+                            <div>
+                                <div class="d-flex justify-content-between small mb-1"><span class="fw-semibold">Dispatch readiness</span><span class="text-primary">94%</span></div>
+                                <div class="progress"><div class="progress-bar bg-primary rounded" style="width: 94%"></div></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+         <div class="row g-4 mb-4">
+             <div class="col-md-3 col-sm-6 reveal">
+                 <div class="glass-card-premium p-4 gradient-card-emerald text-center">
+                     <div class="text-secondary fw-bold small mb-1">Total listings</div>
+                     <div class="display-5 fw-extrabold text-success" id="admin-stats-listings">--</div>
+                 </div>
+             </div>
+
+             <div class="col-md-3 col-sm-6 reveal">
+                 <div class="glass-card-premium p-4 gradient-card-emerald text-center">
+                     <div class="text-secondary fw-bold small mb-1">People fed</div>
+                     <div class="display-5 fw-extrabold text-success" id="admin-stats-fed">--</div>
+                 </div>
+             </div>
+
+             <div class="col-md-3 col-sm-6 reveal">
+                 <div class="glass-card-premium p-4 gradient-card-emerald text-center">
+                     <div class="text-secondary fw-bold small mb-1">Active pickups</div>
+                     <div class="display-5 fw-extrabold text-success" id="admin-stats-pickups">--</div>
+                 </div>
+             </div>
+
+             <div class="col-md-3 col-sm-6 reveal">
+                 <div class="glass-card-premium p-4 gradient-card-emerald text-center">
+                     <div class="text-secondary fw-bold small mb-1">Food saved (kg)</div>
+                     <div class="display-5 fw-extrabold text-success" id="admin-stats-saved">--</div>
+                 </div>
+             </div>
+        </div>
+
+         <!-- CO2 + Meals Extra Metric Cards -->
+         <div class="row g-4 mb-4">
+             <div class="col-md-6 reveal">
+                 <div class="glass-card-premium p-4 gradient-card-emerald text-center">
+                     <div class="text-secondary fw-bold small mb-1">🌍 CO₂ Emissions Prevented</div>
+                     <div class="display-5 fw-extrabold text-success" id="admin-stats-co2">--</div>
+                     <div class="small text-secondary">kilograms CO₂ saved</div>
+                 </div>
+             </div>
+             <div class="col-md-6 reveal">
+                 <div class="glass-card-premium p-4 gradient-card-emerald text-center">
+                     <div class="text-secondary fw-bold small mb-1">🍽️ Total Meals Provided</div>
+                     <div class="display-5 fw-extrabold text-success" id="admin-stats-meals">--</div>
+                     <div class="small text-secondary">meals provided to communities</div>
+                 </div>
+             </div>
+         </div>
+
+        <!-- Chart.js Analytics Row 1 -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-8 reveal">
+                <div class="glass-card-premium p-4">
+                    <h5 class="fw-bold text-success mb-1">📈 Monthly Donation Trends</h5>
+                    <p class="small text-secondary mb-3">Total food donations registered each month over the past year.</p>
+                    <canvas id="chartMonthlyTrends" height="100"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-4 reveal">
+                <div class="glass-card-premium p-4">
+                    <h5 class="fw-bold text-success mb-1">🥗 Food Category Breakdown</h5>
+                    <p class="small text-secondary mb-3">Distribution of donated food by category.</p>
+                    <canvas id="chartFoodCategory" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart.js Analytics Row 2 -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-6 reveal">
+                <div class="glass-card-premium p-4">
+                    <h5 class="fw-bold text-success mb-1">🏢 Top NGO Pickups Leaderboard</h5>
+                    <p class="small text-secondary mb-3">Top 5 NGO partners ranked by total pickups completed.</p>
+                    <canvas id="chartTopNgos" height="160"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-6 reveal">
+                <div class="glass-card-premium p-4">
+                    <h5 class="fw-bold text-success mb-1">🍃 Quarterly CO₂ Savings</h5>
+                    <p class="small text-secondary mb-3">Quarterly donation volume and CO₂ prevented (1 kg food = 2.5 kg CO₂).</p>
+                    <canvas id="chartCo2Impact" height="160"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-xl-8 reveal">
+                <div class="table-responsive-premium shadow-sm">
+                    <div class="p-4 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <h5 class="fw-bold text-success m-0">Global food rescue audit log</h5>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <input type="text" id="adminSearchInput" class="form-control form-control-sm rounded-pill" placeholder="🔍 Search donations..." oninput="filterAdminDonations()" style="min-width: 200px;">
+                            <button class="btn btn-sm btn-outline-success rounded-pill" onclick="exportCSV()">📊 Export CSV</button>
+                        </div>
+                    </div>
+                    <table class="table-premium">
+                        <thead>
+                            <tr>
+                                <th>Food details</th>
+                                <th>Quantity</th>
+                                <th>Donor / NGO info</th>
+                                <th>Location</th>
+                                <th>Current status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminDonationsTableBody">
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <div class="spinner-border text-success spinner-border-sm me-2" role="status"></div>
+                                    Retrieving all listings...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-xl-4 reveal">
+                <div class="glass-card-premium p-4 h-100">
+                    <h5 class="fw-bold text-success mb-4">Operations overview</h5>
+                    <div class="sys-health-list">
+                        <div class="dispatch-card">
+                            <div class="fw-semibold small text-success">Volunteer readiness</div>
+                            <div class="display-6 fw-bold text-success">89%</div>
+                            <p class="small text-secondary mb-0">Partners are ready to respond to the next wave of requests.</p>
+                        </div>
+                        <div class="dispatch-card">
+                            <div class="fw-semibold small text-primary">Mapping coverage</div>
+                            <div class="display-6 fw-bold text-primary">12 hubs</div>
+                            <p class="small text-secondary mb-0">The footprint across nearby cities remains well distributed.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<footer class="py-4 mt-auto border-top">
+    <div class="container text-center">
+        <p class="text-muted mb-0">🌱 FOODBRIDGE AI &copy; 2026. Empowering communities to end food waste.</p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/script.js"></script>
+<script>
+    // Global donations array for search + CSV export
+    let adminAllDonations = [];
+
+    window.addEventListener('DOMContentLoaded', async () => {
+        const user = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user'));
+        if (!user || user.role !== 'Admin') {
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        try {
+            const statsRes = await fetch(`${API_URL}/stats`);
+            const stats = await statsRes.json();
+            document.getElementById('admin-stats-listings').innerText = stats.totalDonations;
+            document.getElementById('admin-stats-fed').innerText = stats.peopleFed;
+            document.getElementById('admin-stats-pickups').innerText = Math.max(0, stats.ngosConnected - 30);
+            document.getElementById('admin-stats-saved').innerText = stats.foodSaved;
+
+            const donRes = await fetch(`${API_URL}/donations`);
+            adminAllDonations = await donRes.json();
+            renderAdminDonations(adminAllDonations);
+            // Load charts & analytics
+            try {
+                const analyticsRes = await fetch(`${API_URL}/stats/analytics`);
+                const analytics = await analyticsRes.json();
+
+                // CO2 + Meals cards
+                if (analytics.environmental) {
+                    document.getElementById('admin-stats-co2').innerText = analytics.environmental.co2SavedKg.toLocaleString();
+                    document.getElementById('admin-stats-meals').innerText = analytics.environmental.mealsProvided.toLocaleString();
+                }
+
+                // Common chart options
+                const gridColor = 'rgba(245,247,250,0.08)';
+
+                // ── Chart 1: Monthly Trends Line Chart ────────────────────────
+                new Chart(document.getElementById('chartMonthlyTrends'), {
+                    type: 'line',
+                    data: {
+                        labels: analytics.monthlyTrends.labels,
+                        datasets: [{
+                            label: 'Donations',
+                            data: analytics.monthlyTrends.data,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16,185,129,0.1)',
+                            borderWidth: 2.5,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#10b981',
+                            pointRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid: { color: gridColor } },
+                            y: { grid: { color: gridColor }, beginAtZero: true }
+                        }
+                    }
+                });
+
+                // ── Chart 2: Food Category Doughnut Chart ─────────────────────
+                new Chart(document.getElementById('chartFoodCategory'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: analytics.foodCategories.labels,
+                        datasets: [{
+                            data: analytics.foodCategories.counts,
+                            backgroundColor: ['#10b981','#3b82f6','#f59e0b','#8b5cf6','#ef4444','#6b7280'],
+                            borderWidth: 2,
+                            borderColor: '#fff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+                        },
+                        cutout: '60%'
+                    }
+                });
+
+                // ── Chart 3: Top NGOs Bar Chart ───────────────────────────────
+                new Chart(document.getElementById('chartTopNgos'), {
+                    type: 'bar',
+                    data: {
+                        labels: analytics.topNgos.labels,
+                        datasets: [{
+                            label: 'Pickups',
+                            data: analytics.topNgos.counts,
+                            backgroundColor: ['#10b981','#3b82f6','#f59e0b','#8b5cf6','#ef4444'],
+                            borderRadius: 6,
+                            borderSkipped: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        indexAxis: 'y',
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid: { color: gridColor }, beginAtZero: true },
+                            y: { grid: { display: false } }
+                        }
+                    }
+                });
+
+                // ── Chart 4: Quarterly CO2 Savings Bar Chart ──────────────────
+                const qData = analytics.quarterlyComparison;
+                new Chart(document.getElementById('chartCo2Impact'), {
+                    type: 'bar',
+                    data: {
+                        labels: qData.labels,
+                        datasets: [
+                            {
+                                label: 'Donations',
+                                data: qData.data,
+                                backgroundColor: 'rgba(16,185,129,0.75)',
+                                borderRadius: 6,
+                                borderSkipped: false
+                            },
+                            {
+                                label: 'CO₂ Saved (kg)',
+                                data: qData.data.map(v => Math.round(v * 2.5)),
+                                backgroundColor: 'rgba(59,130,246,0.65)',
+                                borderRadius: 6,
+                                borderSkipped: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+                        scales: {
+                            x: { grid: { display: false } },
+                            y: { grid: { color: gridColor }, beginAtZero: true }
+                        }
+                    }
+                });
+            } catch (chartErr) {
+                console.warn('Analytics chart load failed:', chartErr.message);
+            }
+
+        } catch (e) {
+            console.error(e);
+        }
+    });
+
+    // Render admin donations table with filtering
+    function renderAdminDonations(donations) {
+        const body = document.getElementById('adminDonationsTableBody');
+        if (!body) return;
+
+        body.innerHTML = '';
+        
+        if (donations.length === 0) {
+            body.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">No listings found in the system.</td></tr>';
+            return;
+        }
+
+        donations.forEach(item => {
+            const tr = document.createElement('tr');
+            const donorName = item.donor ? item.donor.fullName : 'Anonymous';
+            const claimantName = item.claimedBy ? item.claimedBy.fullName : 'None';
+            tr.innerHTML = `
+                <td class="fw-bold text-success">${item.foodName}</td>
+                <td>${item.quantity}</td>
+                <td>
+                    <div><small><strong>Donor:</strong> ${donorName}</small></div>
+                    ${item.status === 'claimed' || item.status === 'accepted' || item.status === 'picked up' || item.status === 'delivered'
+                        ? `<div><small class="text-success"><strong>NGO:</strong> ${claimantName}</small></div>`
+                        : ''
+                    }
+                </td>
+                <td>${item.location}</td>
+                <td>
+                    <span class="badge ${item.status === 'available' ? 'badge-status-available' : 'badge-status-accepted'} rounded-pill">
+                        ${item.status}
+                    </span>
+                </td>
+            `;
+            body.appendChild(tr);
+        });
+    }
+
+    // Admin search filter
+    function filterAdminDonations() {
+        const query = (document.getElementById('adminSearchInput')?.value || '').toLowerCase().trim();
+        if (!adminAllDonations.length) return;
+        const filtered = adminAllDonations.filter(item => {
+            const searchable = `${item.foodName} ${item.location || ''} ${item.donorName || ''} ${item.donor?.fullName || ''} ${item.state || ''} ${item.city || ''}`.toLowerCase();
+            return searchable.includes(query);
+        });
+        renderAdminDonations(filtered);
+    }
+
+    // Export donations to CSV
+    function exportCSV() {
+        if (!adminAllDonations.length) {
+            showToast('No donation data to export.', 'error');
+            return;
+        }
+
+        const headers = ['Food Name', 'Quantity', 'Location', 'City', 'State', 'Pincode', 'Donor', 'NGO', 'Status', 'Expiry', 'Created'];
+        const rows = adminAllDonations.map(d => [
+            d.foodName || '',
+            d.quantity || '',
+            d.location || d.address || '',
+            d.city || '',
+            d.state || '',
+            d.pincode || '',
+            (d.donor && d.donor.fullName) || d.donorName || '',
+            (d.claimedBy && d.claimedBy.fullName) || '',
+            d.status || '',
+            d.expiry || '',
+            d.createdAt ? new Date(d.createdAt).toISOString() : ''
+        ]);
+
+        const csv = [headers, ...rows]
+            .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+            .join('\n');
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `zero-waste-ai-donations-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('CSV exported successfully! 📊');
+    }
+</script>
+</body>
+</html>

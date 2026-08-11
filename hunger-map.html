@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Interactive Hunger Map - FOODBRIDGE AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/premium.css">
+
+    <style>
+        :root {
+            --map-bg: linear-gradient(135deg, #eef7ff 0%, #eaf4ff 50%, #dff7f0 100%);
+            --glass-card: rgba(255, 255, 255, 0.82);
+            --emerald: #10b981;
+            --emerald-dark: #059669;
+            --ngo-blue: #3b82f6;
+            --pickup-orange: #f59e0b;
+            --delivery-purple: #8b5cf6;
+            --high-need-pink: #f43f5e;
+            --text-navy: #0f172a;
+            --text-slate: #334155;
+            --text-muted: #64748b;
+        }
+
+        body {
+            background: var(--map-bg) !important;
+            color: var(--text-navy);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .map-container-fluid {
+            padding-top: 100px;
+            padding-bottom: 40px;
+        }
+
+        /* Stat Cards */
+        .stat-card-mini {
+            background: white;
+            border-radius: 16px;
+            padding: 15px;
+            border: 1px solid rgba(16, 185, 129, 0.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            transition: transform 0.2s;
+        }
+        .stat-card-mini:hover { transform: translateY(-3px); }
+        .stat-card-mini .value { font-size: 1.5rem; font-weight: 800; color: var(--emerald); }
+        .stat-card-mini .label { font-size: 0.7rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Filter Panel */
+        .filter-panel {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.8);
+        }
+
+        .filter-group label {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--text-slate);
+            margin-bottom: 6px;
+            display: block;
+            text-transform: uppercase;
+        }
+
+        .form-select-map, .form-input-map {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1.5px solid #e2e8f0;
+            background: #ffffff !important;
+            color: #0f172a !important;
+            font-size: 0.9rem;
+            font-weight: 600;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-select-map:focus, .form-input-map:focus { border-color: var(--emerald); }
+        .form-select-map option { background: white !important; color: #0f172a !important; }
+        ::placeholder { color: var(--text-muted) !important; }
+
+        /* Map Section */
+        .map-section {
+            position: relative;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.1);
+            border: 4px solid white;
+            background: white;
+        }
+        #map {
+            height: 700px;
+            width: 100%;
+            z-index: 1;
+        }
+
+        /* Side Panels */
+        .side-panel {
+            height: 100%;
+            background: var(--glass-card);
+            backdrop-filter: blur(12px);
+            border-radius: 24px;
+            padding: 20px;
+            border: 1px solid white;
+            box-shadow: 0 8px 32px rgba(15, 23, 42, 0.05);
+        }
+        .side-panel h6 { font-weight: 800; color: var(--text-navy); border-bottom: 2px solid rgba(16, 185, 129, 0.1); padding-bottom: 10px; margin-bottom: 15px; }
+
+        /* Floating Overlays */
+        .map-legend-floating {
+            position: absolute;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            background: white;
+            padding: 10px 25px;
+            border-radius: 999px;
+            display: flex;
+            gap: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            white-space: nowrap;
+        }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; font-weight: 800; color: var(--text-slate); }
+        .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+        .activity-item {
+            padding: 12px;
+            border-radius: 12px;
+            background: white;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--emerald);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .activity-item.pickup { border-left-color: var(--pickup-orange); }
+        .activity-item.delivery { border-left-color: var(--delivery-purple); }
+
+        .high-need-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .footer-tagline {
+            text-align: center;
+            margin-top: 30px;
+            font-weight: 700;
+            color: var(--emerald-dark);
+            font-style: italic;
+        }
+
+        @media (max-width: 1200px) {
+            #map { height: 500px; }
+            .map-container-fluid { padding-top: 80px; }
+        }
+    </style>
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg navbar-floating">
+    <div class="container-fluid px-0">
+        <a class="navbar-brand fb-brand" href="index.html">
+            <img src="images/foodbridge.logo.png" alt="FOODBRIDGE AI Logo" class="fb-logo-img">
+            <span class="fb-brand-text">
+                <span class="fb-wordmark">
+                    <span class="fb-g">FOOD</span><span class="fb-b">BRIDGE</span>
+                    <span class="fb-ai-badge">AI</span>
+                </span>
+                <span class="fb-tagline">REDUCE WASTE. FEED HOPE. CREATE IMPACT.</span>
+            </span>
+        </a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#menu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="menu">
+            <!-- Dynamic navbar rendered by script.js -->
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid map-container-fluid px-lg-5">
+    
+    <!-- STATS ROW -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3">
+            <div class="stat-card-mini">
+                <div class="label">Total Donations</div>
+                <div class="value" id="stat-donations">--</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card-mini">
+                <div class="label">Meals Saved</div>
+                <div class="value" id="stat-meals">--</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card-mini">
+                <div class="label">Active NGOs</div>
+                <div class="value" id="stat-ngos">--</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-card-mini">
+                <div class="label">Pickups Today</div>
+                <div class="value" id="stat-pickups">--</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FILTER PANEL -->
+    <div class="filter-panel">
+        <div class="row g-3">
+            <div class="col-lg-2 col-md-4 filter-group">
+                <label>🔍 Search Food/Donor</label>
+                <input type="text" id="filterSearch" class="form-input-map" placeholder="e.g. Rice, Biryani...">
+            </div>
+            <div class="col-lg-2 col-md-4 filter-group">
+                <label>🗺️ State</label>
+                <select id="filterState" class="form-select-map">
+                    <option value="all">All States</option>
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-4 filter-group">
+                <label>📍 District</label>
+                <select id="filterDistrict" class="form-select-map">
+                    <option value="all">All Districts</option>
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-4 filter-group">
+                <label>🌆 City</label>
+                <input type="text" id="filterCity" class="form-input-map" placeholder="Search City..." list="cityList">
+                <datalist id="cityList"></datalist>
+            </div>
+            <div class="col-lg-2 col-md-4 filter-group">
+                <label>🥗 Category</label>
+                <select id="filterCategory" class="form-select-map">
+                    <option value="all">All Categories</option>
+                    <option value="meals">Cooked Meals</option>
+                    <option value="produce">Fresh Produce</option>
+                    <option value="packaged">Packaged Food</option>
+                    <option value="bakery">Bakery & Bread</option>
+                </select>
+            </div>
+            <div class="col-lg-2 col-md-4 filter-group">
+                <label>📌 Status</label>
+                <select id="filterStatus" class="form-select-map">
+                    <option value="all">All Resources</option>
+                    <option value="available">Available Food</option>
+                    <option value="claimed">Claimed / Accepted</option>
+                    <option value="ngo">NGO Centers Only</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN MAP AREA -->
+    <div class="row g-4">
+        <!-- LEFT PANEL -->
+        <div class="col-lg-3 d-none d-lg-block">
+            <div class="side-panel">
+                <h6>📦 Live Activity Feed</h6>
+                <div id="liveActivity">
+                    <div class="text-center py-4 text-muted small">Loading live data...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CENTER MAP -->
+        <div class="col-lg-6 col-md-8">
+            <div class="map-section">
+                <div id="map"></div>
+                
+                <!-- Floating Legend -->
+                <div class="map-legend-floating">
+                    <div class="legend-item"><span class="legend-dot" style="background:var(--emerald)"></span> Available</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:var(--ngo-blue)"></span> NGO</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:var(--pickup-orange)"></span> Pickup</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:var(--delivery-purple)"></span> Delivery</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:var(--high-need-pink)"></span> High Need</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="col-lg-3 col-md-4">
+            <div class="side-panel">
+                <h6>📉 Live Overview</h6>
+                <div class="mb-4">
+                    <div class="small fw-bold text-muted mb-2">HIGH NEED AREAS</div>
+                    <div id="highNeedAreas">
+                        <div class="text-muted small">Calculating heatmap data...</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="small fw-bold text-muted mb-2">CURRENT DISPATCH</div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="small fw-bold">In Transit</span>
+                        <span class="small fw-bold text-primary" id="cnt-transit">0</span>
+                    </div>
+                    <div class="progress mb-3" style="height: 6px;">
+                        <div class="progress-bar bg-primary" id="bar-transit" style="width: 0%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="small fw-bold">Delivered Today</span>
+                        <span class="small fw-bold text-success" id="cnt-delivered">0</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-success" id="bar-delivered" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-tagline">
+        "Together, we can end food waste and feed every soul."<br>
+        <span style="font-size: 0.9rem; color: var(--text-muted); font-weight: 500;">See Hunger. Share Food. Save Lives.</span>
+    </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="bg-white py-4 mt-5 border-top">
+    <div class="container text-center">
+        <p class="text-muted mb-0">🌱 FOODBRIDGE AI &copy; 2026. Empowering communities to end food waste.</p>
+    </div>
+</footer>
+
+<!-- JS LIBRARIES -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="js/script.js"></script>
+
+<script>
+    let map;
+    let markersLayer = L.layerGroup();
+    let mapDonations = [];
+    let mapNGOs = [];
+
+    // Custom Icons
+    const createMarkerIcon = (color, emoji) => L.divIcon({
+        className: 'custom-map-marker',
+        html: `<div style="background:${color}; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:16px; border:2px solid white; box-shadow:0 4px 12px rgba(0,0,0,0.2); transition: transform 0.2s;">${emoji}</div>`,
+        iconSize: [34, 34], iconAnchor: [17, 17], popupAnchor: [0, -17]
+    });
+
+    const icons = {
+        available: createMarkerIcon('#10b981', '🍲'),
+        accepted: createMarkerIcon('#f59e0b', '🤝'),
+        pickup: createMarkerIcon('#f59e0b', '🚚'),
+        delivered: createMarkerIcon('#8b5cf6', '✅'),
+        ngo: createMarkerIcon('#3b82f6', '🏢'),
+        urgent: createMarkerIcon('#f43f5e', '🚨')
+    };
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Init map on India
+        map = L.map('map', { zoomControl: false }).setView([20.5937, 78.9629], 5);
+        L.control.zoom({ position: 'topright' }).addTo(map);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+
+        markersLayer.addTo(map);
+
+        await initializeFilters();
+        await fetchData();
+        setupListeners();
+    });
+
+    async function initializeFilters() {
+        try {
+            const res = await fetch(`${API_URL}/map/states`);
+            const states = await res.json();
+            const stateSelect = document.getElementById('filterState');
+            states.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.name;
+                opt.textContent = `${s.name} (${s.count})`;
+                stateSelect.appendChild(opt);
+            });
+        } catch (e) { console.error('States error:', e); }
+    }
+
+    async function updateDistricts() {
+        const state = document.getElementById('filterState').value;
+        const distSelect = document.getElementById('filterDistrict');
+        distSelect.innerHTML = '<option value="all">All Districts</option>';
+        try {
+            const res = await fetch(`${API_URL}/map/districts?state=${state}`);
+            const districts = await res.json();
+            districts.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d.name;
+                opt.textContent = `${d.name} (${d.count})`;
+                distSelect.appendChild(opt);
+            });
+        } catch (e) { console.error('Districts error:', e); }
+        updateCities();
+        renderMarkers();
+    }
+
+    async function updateCities() {
+        const state = document.getElementById('filterState').value;
+        const dist = document.getElementById('filterDistrict').value;
+        const cityList = document.getElementById('cityList');
+        cityList.innerHTML = '';
+        try {
+            const res = await fetch(`${API_URL}/map/cities?state=${state}&district=${dist}`);
+            const cities = await res.json();
+            cities.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.name;
+                cityList.appendChild(opt);
+            });
+        } catch (e) { console.error('Cities error:', e); }
+    }
+
+    async function fetchData() {
+        try {
+            const [donRes, ngoRes] = await Promise.all([
+                fetch(`${API_URL}/map/donations`),
+                fetch(`${API_URL}/map/ngos`)
+            ]);
+            mapDonations = await donRes.json();
+            mapNGOs = await ngoRes.json();
+            renderMarkers(true); // Fit markers on first load
+        } catch (e) { console.error('Fetch error:', e); }
+    }
+
+    function renderMarkers(fit = false) {
+        markersLayer.clearLayers();
+        const search = document.getElementById('filterSearch').value.toLowerCase();
+        const state = document.getElementById('filterState').value;
+        const dist = document.getElementById('filterDistrict').value;
+        const city = document.getElementById('filterCity').value.toLowerCase();
+        const cat = document.getElementById('filterCategory').value;
+        const status = document.getElementById('filterStatus').value;
+
+        let visibleMarkers = [];
+
+        // Donations
+        if (status === 'all' || ['available', 'claimed', 'accepted', 'picked up', 'delivered'].includes(status)) {
+            mapDonations.forEach(d => {
+                if (status !== 'all' && status !== 'claimed' && d.status !== status) return;
+                if (status === 'claimed' && !['claimed', 'accepted', 'picked up'].includes(d.status)) return;
+                
+                if (state !== 'all' && d.state !== state) return;
+                if (dist !== 'all' && d.district !== dist) return;
+                if (city && d.city && !d.city.toLowerCase().includes(city)) return;
+                if (search && !d.foodName.toLowerCase().includes(search) && !d.donor.fullName.toLowerCase().includes(search)) return;
+
+                if (cat !== 'all') {
+                    const fn = d.foodName.toLowerCase();
+                    const dc = (d.category || '').toLowerCase();
+                    if (cat === 'meals' && !dc.includes('meal') && !fn.includes('meal') && !fn.includes('rice')) return;
+                    if (cat === 'produce' && !dc.includes('produce') && !fn.includes('veg')) return;
+                    if (cat === 'packaged' && !dc.includes('pack')) return;
+                    if (cat === 'bakery' && !dc.includes('bakery') && !fn.includes('bread')) return;
+                }
+
+                const icon = icons[d.status] || icons.available;
+                const marker = L.marker([d.lat, d.lng], { icon }).bindPopup(createPopup(d, 'donation'));
+                markersLayer.addLayer(marker);
+                visibleMarkers.push(marker);
+            });
+        }
+
+        // NGOs
+        if (status === 'all' || status === 'ngo') {
+            mapNGOs.forEach(n => {
+                if (state !== 'all' && n.state !== state) return;
+                if (city && n.city && !n.city.toLowerCase().includes(city)) return;
+                if (search && !n.fullName.toLowerCase().includes(search)) return;
+
+                const marker = L.marker([n.lat, n.lng], { icon: icons.ngo }).bindPopup(createPopup(n, 'ngo'));
+                markersLayer.addLayer(marker);
+                visibleMarkers.push(marker);
+            });
+        }
+
+        if (fit && visibleMarkers.length > 0) {
+            const group = L.featureGroup(visibleMarkers);
+            map.fitBounds(group.getBounds().pad(0.1));
+        }
+
+        updateStats(mapDonations, mapNGOs);
+    }
+
+    function createPopup(item, type) {
+        if (type === 'donation') {
+            return `
+                <div style="min-width: 220px;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="badge ${item.status === 'available' ? 'bg-success' : 'bg-warning'} text-white">${item.status}</span>
+                        <span class="small text-muted">${item.category}</span>
+                    </div>
+                    <h6 class="fw-bold text-success mb-1">🍲 ${item.foodName}</h6>
+                    <hr class="my-2">
+                    <div class="small">
+                        <strong>📦 Qty:</strong> ${item.quantity}<br>
+                        <strong>👤 Donor:</strong> ${item.donor.fullName}<br>
+                        <strong>📍 Loc:</strong> ${item.city}, ${item.state}<br>
+                        <strong>⏳ Expiry:</strong> ${item.expiry}
+                    </div>
+                </div>
+            `;
+        } else {
+            return `
+                <div style="min-width: 200px;">
+                    <div class="badge bg-primary text-white mb-2">Registered NGO</div>
+                    <h6 class="fw-bold text-primary mb-1">🏢 ${item.fullName}</h6>
+                    <hr class="my-2">
+                    <div class="small">
+                        <strong>📍 Base:</strong> ${item.city}, ${item.state}<br>
+                        <strong>📞 Call:</strong> ${item.mobileNumber}<br>
+                        <strong>✉️ Email:</strong> ${item.email}
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    function updateStats(donations, ngos) {
+        document.getElementById('stat-donations').textContent = donations.length;
+        document.getElementById('stat-ngos').textContent = ngos.length;
+        
+        let meals = 0;
+        donations.forEach(d => {
+            const match = d.quantity.match(/(\d+)/);
+            meals += match ? parseInt(match[1]) : 10;
+        });
+        document.getElementById('stat-meals').textContent = meals;
+
+        const pickups = donations.filter(d => ['claimed', 'accepted', 'picked up'].includes(d.status)).length;
+        document.getElementById('stat-pickups').textContent = pickups;
+
+        const transit = donations.filter(d => d.status === 'picked up').length;
+        const delivered = donations.filter(d => d.status === 'delivered').length;
+        
+        document.getElementById('cnt-transit').textContent = transit;
+        document.getElementById('cnt-delivered').textContent = delivered;
+        
+        const totalOps = transit + delivered || 1;
+        document.getElementById('bar-transit').style.width = `${(transit / totalOps) * 100}%`;
+        document.getElementById('bar-delivered').style.width = `${(delivered / totalOps) * 100}%`;
+
+        // Update Feed
+        const feed = document.getElementById('liveActivity');
+        const recent = donations.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+        feed.innerHTML = recent.map(d => `
+            <div class="activity-item ${d.status === 'picked up' ? 'pickup' : d.status === 'delivered' ? 'delivery' : ''}">
+                <div class="fw-bold small">${d.foodName}</div>
+                <div class="text-muted" style="font-size:0.7rem">${d.city} • ${d.status}</div>
+            </div>
+        `).join('');
+
+        // Update Heatmap/High Need (Grouped by City)
+        const cityStats = {};
+        donations.filter(d => d.status === 'available').forEach(d => {
+            cityStats[d.city] = (cityStats[d.city] || 0) + 1;
+        });
+        const sortedCities = Object.entries(cityStats).sort((a, b) => b[1] - a[1]).slice(0, 5);
+        document.getElementById('highNeedAreas').innerHTML = sortedCities.map(([city, count]) => `
+            <div class="high-need-item">
+                <span class="small fw-bold">${city}</span>
+                <span class="badge bg-danger rounded-pill">${count} Surplus</span>
+            </div>
+        `).join('') || '<div class="text-muted small">No active surplus found.</div>';
+    }
+
+    function setupListeners() {
+        document.getElementById('filterState').addEventListener('change', updateDistricts);
+        document.getElementById('filterDistrict').addEventListener('change', () => { updateCities(); renderMarkers(); });
+        document.getElementById('filterCity').addEventListener('input', renderMarkers);
+        document.getElementById('filterSearch').addEventListener('input', renderMarkers);
+        document.getElementById('filterCategory').addEventListener('change', renderMarkers);
+        document.getElementById('filterStatus').addEventListener('change', renderMarkers);
+    }
+</script>
+</body>
+</html>

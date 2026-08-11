@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Interactive Hunger Map - ZERO WASTE AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+
+    <!-- Leaflet Marker Cluster CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin="" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" crossorigin="" />
+
+    <!-- Leaflet Heatmap CSS (just for consistency, heat uses JS only) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.css" />
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/premium.css">
+
+    <style>
+        .map-page {
+            margin-top: 100px;
+        }
+        #map {
+            height: 620px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            z-index: 1;
+        }
+        .map-filters-card {
+            border-radius: 20px;
+            background: rgba(255,255,255,0.95) !important;
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(148,163,184,0.3) !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+        }
+        body[data-theme='dark'] .map-filters-card {
+            background: rgba(15,23,42,0.92) !important;
+            border-color: rgba(148,163,184,0.2) !important;
+        }
+        .map-legend {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(12px);
+            border-radius: 14px;
+            padding: 12px 16px;
+            border: 1px solid rgba(148,163,184,0.2);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            font-size: 0.8rem;
+        }
+        body[data-theme='dark'] .map-legend {
+            background: rgba(15,23,42,0.92);
+        }
+        .legend-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+        .dot-available { background-color: #10b981; }
+        .dot-ngo { background-color: #3b82f6; }
+        .dot-accepted { background-color: #f59e0b; }
+        .dot-pickup { background-color: #8b5cf6; }
+        .dot-delivered { background-color: #22d3ee; }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 14px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            font-family: inherit;
+        }
+        .map-popup-title {
+            font-weight: 800;
+            font-size: 1rem;
+            color: #059669;
+            margin-bottom: 4px;
+        }
+        .map-popup-badge {
+            font-size: 0.72rem;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-weight: 700;
+            display: inline-block;
+        }
+        .map-popup-detail {
+            margin: 3px 0;
+            font-size: 0.85rem;
+            color: #475569;
+        }
+        body[data-theme='dark'] .map-popup-detail {
+            color: #cbd5e1;
+        }
+        .map-search-box input {
+            border-radius: 999px;
+            border: 1px solid rgba(148,163,184,0.24);
+            padding: 8px 16px;
+            width: 100%;
+        }
+        .map-toggle-heat {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .form-switch .form-check-input {
+            width: 2.5em;
+            height: 1.25em;
+        }
+
+        /* ─── High-Contrast Filter UI Rules ───
+           body.premium-body prefix gives these rules higher specificity than
+           premium.css theme overrides (body.premium-body .form-control,
+           body.premium-body .text-secondary, body.premium-body .small) so
+           typed text, placeholders, dropdowns and labels stay readable. */
+        body.premium-body .map-filter-input,
+        body.premium-body .map-filter-select,
+        body.premium-body .map-filters-card input,
+        body.premium-body .map-filters-card select {
+            color: #0f172a !important;
+            background-color: #ffffff !important;
+            border: 1.5px solid rgba(148, 163, 184, 0.4) !important;
+            border-radius: 999px !important;
+            padding: 8px 16px !important;
+            font-size: 0.88rem !important;
+            font-weight: 700 !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
+            appearance: auto !important;
+            -webkit-appearance: auto !important;
+        }
+
+        body.premium-body[data-theme='dark'] .map-filter-input,
+        body.premium-body[data-theme='dark'] .map-filter-select,
+        body.premium-body[data-theme='dark'] .map-filters-card input,
+        body.premium-body[data-theme='dark'] .map-filters-card select {
+            color: #f8fafc !important;
+            background-color: #1e293b !important;
+            border-color: rgba(148, 163, 184, 0.3) !important;
+        }
+
+        body.premium-body .map-filter-input::placeholder,
+        body.premium-body .map-filters-card input::placeholder {
+            color: #64748b !important;
+            font-weight: 500 !important;
+            opacity: 1 !important;
+        }
+
+        body.premium-body[data-theme='dark'] .map-filter-input::placeholder,
+        body.premium-body[data-theme='dark'] .map-filters-card input::placeholder {
+            color: #94a3b8 !important;
+        }
+
+        body.premium-body .map-filter-select option,
+        body.premium-body .map-filters-card select option,
+        body.premium-body select.form-select option,
+        body.premium-body select option {
+            color: #0f172a !important;
+            background-color: #ffffff !important;
+            font-weight: 600 !important;
+            padding: 10px 14px !important;
+        }
+
+        body.premium-body[data-theme='dark'] .map-filter-select option,
+        body.premium-body[data-theme='dark'] .map-filters-card select option,
+        body.premium-body[data-theme='dark'] select.form-select option,
+        body.premium-body[data-theme='dark'] select option {
+            color: #f8fafc !important;
+            background-color: #1e293b !important;
+        }
+
+        body.premium-body .map-filter-select option:hover,
+        body.premium-body .map-filter-select option:focus,
+        body.premium-body .map-filter-select option:checked,
+        body.premium-body .map-filters-card select option:hover,
+        body.premium-body .map-filters-card select option:focus,
+        body.premium-body .map-filters-card select option:checked {
+            background-color: #10b981 !important;
+            color: #ffffff !important;
+        }
+
+        /* Filter labels must stay readable on the light filter card */
+        body.premium-body .map-filters-card .form-label {
+            color: #0f172a !important;
+        }
+
+        body.premium-body[data-theme='dark'] .map-filters-card .form-label {
+            color: #e2e8f0 !important;
+        }
+
+        /* ─── Location Search Results Dropdown ─── */
+        .location-search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 2000;
+            background: #ffffff;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            border-radius: 14px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 4px;
+        }
+        body[data-theme='dark'] .location-search-results {
+            background: #1e293b;
+            border-color: rgba(148, 163, 184, 0.2);
+        }
+        .location-search-item {
+            padding: 10px 14px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+            transition: background 0.15s ease;
+        }
+        .location-search-item:last-child {
+            border-bottom: none;
+        }
+        .location-search-item:hover {
+            background: rgba(16, 185, 129, 0.08);
+        }
+        body[data-theme='dark'] .location-search-item:hover {
+            background: rgba(16, 185, 129, 0.15);
+        }
+        .location-search-item .ls-type {
+            display: inline-block;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 2px 8px;
+            border-radius: 999px;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+        .ls-type-state { background: rgba(59, 130, 246, 0.12); color: #2563eb; }
+        .ls-type-district { background: rgba(16, 185, 129, 0.12); color: #059669; }
+        .ls-type-city { background: rgba(245, 158, 11, 0.14); color: #d97706; }
+        .ls-type-address { background: rgba(139, 92, 246, 0.12); color: #7c3aed; }
+        .location-search-item .ls-name {
+            font-weight: 600;
+            color: #0f172a;
+        }
+        body[data-theme='dark'] .location-search-item .ls-name {
+            color: #f8fafc;
+        }
+        .location-search-item .ls-sub {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        body[data-theme='dark'] .location-search-item .ls-sub {
+            color: #94a3b8;
+        }
+
+        @media (max-width: 768px) {
+            #map { height: 460px; }
+        }
+    </style>
+</head>
+
+<body class="d-flex flex-column min-vh-100 premium-body">
+
+<!-- FLOATING GLASSNAV -->
+<nav class="navbar navbar-expand-lg navbar-floating">
+    <div class="container-fluid px-0">
+        <a class="navbar-brand fw-bold text-success" href="index.html">
+            🌱 ZERO WASTE AI
+        </a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#menu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="menu">
+            <!-- Dynamic navbar content populated by script.js -->
+        </div>
+    </div>
+</nav>
+
+<div class="container map-page pb-5">
+    <div class="row align-items-center mb-4">
+        <div class="col-md-8">
+            <span class="hero-pill-premium mb-2">🗺️ Live All-India Tracking</span>
+            <h1 class="fw-bold display-6 mb-1">Live Hunger Map</h1>
+            <p class="text-secondary mb-0">Real-time geospatial tracking of food donations, NGO centers, pickups, and deliveries across every state in India.</p>
+        </div>
+        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+            <button class="btn btn-success btn-sm rounded-pill px-3" onclick="fitMapToMarkers()">🎯 Fit All Markers</button>
+        </div>
+    </div>
+
+    <!-- SEARCH + FILTERS CARD -->
+    <div class="map-filters-card p-3 mb-4 shadow-sm">
+        <div class="row g-2 align-items-end">
+            <!-- Location Search -->
+            <div class="col-md-4 map-search-box">
+                <label class="form-label fw-bold text-secondary small mb-1">🔍 Search Location</label>
+                <div class="position-relative">
+                    <input type="text" id="mapSearchInput" class="map-filter-input" placeholder="Search state, district, city or address..." oninput="onLocationSearchInput()" autocomplete="off">
+                    <div id="locationSearchResults" class="location-search-results d-none"></div>
+                </div>
+            </div>
+
+            <!-- State Filter -->
+            <div class="col-md-2">
+                <label for="filterState" class="form-label fw-bold text-secondary small mb-1">🌏 State</label>
+                <select id="filterState" class="form-select form-select-sm border-0 rounded-pill bg-light" onchange="onStateFilterChange()">
+                    <option value="all">All India</option>
+                </select>
+            </div>
+
+            <!-- District Filter -->
+            <div class="col-md-2">
+                <label for="filterDistrict" class="form-label fw-bold text-secondary small mb-1">📍 District</label>
+                <select id="filterDistrict" class="form-select form-select-sm border-0 rounded-pill bg-light" onchange="onDistrictFilterChange()">
+                    <option value="all">All Districts</option>
+                </select>
+            </div>
+
+            <!-- City Filter with Dynamic Autocomplete -->
+            <div class="col-md-2">
+                <label for="filterCity" class="form-label fw-bold text-secondary small mb-1">🏙️ City</label>
+                <input type="text" id="filterCity" list="cityDatalist" class="form-control form-control-sm rounded-pill border-0 bg-light" placeholder="Type city..." oninput="applyMapFilters()">
+                <datalist id="cityDatalist"></datalist>
+            </div>
+
+            <!-- Category Filter -->
+            <div class="col-md-2">
+                <label for="filterCategory" class="form-label fw-bold text-secondary small mb-1">🥗 Category</label>
+                <select id="filterCategory" class="form-select form-select-sm border-0 rounded-pill bg-light" onchange="applyMapFilters()">
+                    <option value="all">All Categories</option>
+                    <option value="Cooked Meals">🍛 Cooked Meals</option>
+                    <option value="Bakery & Bread">🥖 Bakery & Bread</option>
+                    <option value="Fresh Produce">🥬 Fresh Produce</option>
+                    <option value="Packaged Food">📦 Packaged Food</option>
+                    <option value="Dairy">🥛 Dairy</option>
+                    <option value="Other">🔄 Other</option>
+                </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="col-md-2">
+                <label for="filterStatus" class="form-label fw-bold text-secondary small mb-1">📌 Status</label>
+                <select id="filterStatus" class="form-select form-select-sm border-0 rounded-pill bg-light" onchange="applyMapFilters()">
+                    <option value="all">All Statuses</option>
+                    <option value="available">🍲 Available</option>
+                    <option value="accepted">🤝 Accepted</option>
+                    <option value="picked up">🚚 Pickup</option>
+                    <option value="delivered">✅ Delivered</option>
+                    <option value="ngo">🏢 NGO Centers</option>
+                </select>
+            </div>
+
+            <!-- Date Range -->
+            <div class="col-md-2">
+                <label for="filterDate" class="form-label fw-bold text-secondary small mb-1">📅 Date</label>
+                <input type="date" id="filterDate" class="form-control form-control-sm rounded-pill border-0 bg-light" onchange="applyMapFilters()">
+            </div>
+
+            <!-- Heatmap Toggle -->
+            <div class="col-md-2">
+                <div class="form-check form-switch map-toggle-heat mb-1">
+                    <input class="form-check-input" type="checkbox" id="heatmapToggle" onchange="toggleHeatmap()">
+                    <label class="form-check-label small fw-bold text-secondary" for="heatmapToggle">🔥 Heatmap</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAP CONTAINER -->
+    <div class="position-relative">
+        <div id="map"></div>
+
+        <!-- Live Legend Overlay -->
+        <div class="map-legend">
+            <div class="fw-bold small mb-1">Map Legend</div>
+            <div class="mb-1"><span class="legend-dot dot-available"></span>🍲 Donation</div>
+            <div class="mb-1"><span class="legend-dot dot-ngo"></span>🏢 NGO</div>
+            <div class="mb-1"><span class="legend-dot dot-accepted"></span>🤝 Accepted</div>
+            <div class="mb-1"><span class="legend-dot dot-pickup"></span>🚚 Pickup</div>
+            <div><span class="legend-dot dot-delivered"></span>✅ Delivered</div>
+        </div>
+    </div>
+
+    <!-- Marker Count Summary -->
+    <div class="text-center mt-3" id="mapStatsSummary"></div>
+</div>
+
+<!-- FOOTER -->
+<footer class="py-4 mt-auto border-top">
+    <div class="container text-center">
+        <p class="text-muted mb-0">🌱 ZERO WASTE AI &copy; 2026. Empowering communities to end food waste.</p>
+    </div>
+</footer>
+
+<!-- JS LIBRARIES -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js" crossorigin=""></script>
+<script src="js/script.js"></script>
+
+<script>
+    let map;
+    let markersLayer;
+    let heatLayer;
+    let mapDonations = [];
+    let mapNGOs = [];
+    let allStates = [];
+    let hasFittedBounds = false;
+
+    // India center — initial view before data loads
+    const INDIA_CENTER = [20.5937, 78.9629];
+
+    // Custom Icon Definitions
+    const createCustomIcon = (colorHex, emoji) => {
+        if (typeof L === 'undefined') return null;
+        return L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style="background-color:${colorHex}; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:15px; border:2px solid white; box-shadow:0 4px 10px rgba(0,0,0,0.3);">${emoji}</div>`,
+            iconSize: [32, 32],
+            iconAnchor: [16, 16],
+            popupAnchor: [0, -16]
+        });
+    };
+
+    let iconDonation, iconNGO, iconAccepted, iconPickup, iconDelivered;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        console.log('Hunger Map initializing...');
+
+        if (typeof API_URL === 'undefined') {
+            window.API_URL = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+                ? "http://localhost:5000/api"
+                : "/api";
+        }
+
+        // Initialize Map centered on India
+        map = L.map('map').setView(INDIA_CENTER, 5);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors | Zero Waste AI'
+        }).addTo(map);
+
+        // Marker cluster group
+        markersLayer = L.markerClusterGroup({
+            chunkedLoading: true,
+            maxClusterRadius: 50
+        }).addTo(map);
+
+        // Heat layer (initially hidden)
+        heatLayer = L.heatLayer([], {
+            radius: 35,
+            blur: 20,
+            maxZoom: 12,
+            minOpacity: 0.4
+        });
+
+        // Initialize Icons
+        iconDonation = createCustomIcon('#10b981', '🍲');
+        iconNGO = createCustomIcon('#3b82f6', '🏢');
+        iconAccepted = createCustomIcon('#f59e0b', '🤝');
+        iconPickup = createCustomIcon('#8b5cf6', '🚚');
+        iconDelivered = createCustomIcon('#22d3ee', '✅');
+
+        await fetchMapData();
+        setupFilterListeners();
+        await loadStates();
+        await loadDistricts('all');
+        await loadCities('all', 'all');
+    });
+
+    // ─── Load All-India State List ──────────────────────────────────────────
+    async function loadStates() {
+        try {
+            const res = await fetch(`${API_URL}/map/states`);
+            if (res.ok) {
+                allStates = await res.json();
+                const stateSelect = document.getElementById('filterState');
+                stateSelect.innerHTML = '<option value="all">All India</option>';
+                allStates.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.name;
+                    opt.textContent = s.name + ` (${s.count})`;
+                    stateSelect.appendChild(opt);
+                });
+            }
+        } catch (e) {
+            console.warn('State list load failed:', e.message);
+        }
+    }
+
+    // ─── Load District List ─────────────────────────────────────────────────
+    async function loadDistricts(selectedState = 'all') {
+        try {
+            const res = await fetch(`${API_URL}/map/districts?state=${encodeURIComponent(selectedState)}`);
+            if (res.ok) {
+                const districts = await res.json();
+                const distSelect = document.getElementById('filterDistrict');
+                if (distSelect) {
+                    distSelect.innerHTML = '<option value="all">All Districts</option>';
+                    districts.forEach(d => {
+                        const opt = document.createElement('option');
+                        opt.value = d.name;
+                        opt.textContent = d.name + ` (${d.count})`;
+                        distSelect.appendChild(opt);
+                    });
+                }
+            }
+        } catch (e) {
+            console.warn('District list load failed:', e.message);
+        }
+    }
+
+    // ─── Load City Autocomplete List ────────────────────────────────────────
+    async function loadCities(selectedState = 'all', selectedDistrict = 'all') {
+        try {
+            const res = await fetch(`${API_URL}/map/cities?state=${encodeURIComponent(selectedState)}&district=${encodeURIComponent(selectedDistrict)}`);
+            if (res.ok) {
+                const cities = await res.json();
+                const datalist = document.getElementById('cityDatalist');
+                if (datalist) {
+                    datalist.innerHTML = '';
+                    cities.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.name;
+                        opt.label = `${c.name} (${c.count} listings)`;
+                        datalist.appendChild(opt);
+                    });
+                }
+            }
+        } catch (e) {
+            console.warn('City list load failed:', e.message);
+        }
+    }
+
+    async function onStateFilterChange() {
+        const selectedState = document.getElementById('filterState').value;
+        await loadDistricts(selectedState);
+        await loadCities(selectedState, 'all');
+        applyMapFilters();
+    }
+
+    async function onDistrictFilterChange() {
+        const selectedState = document.getElementById('filterState').value;
+        const selectedDistrict = document.getElementById('filterDistrict').value;
+        await loadCities(selectedState, selectedDistrict);
+        applyMapFilters();
+    }
+
+    // ─── Location Search (Real API/Database Results) ──────────────────────
+    let locationSearchTimer = null;
+
+    async function onLocationSearchInput() {
+        const input = document.getElementById('mapSearchInput');
+        const resultsEl = document.getElementById('locationSearchResults');
+        const query = (input.value || '').trim();
+
+        if (!query || query.length < 2) {
+            if (resultsEl) resultsEl.classList.add('d-none');
+            applyMapFilters();
+            return;
+        }
+
+        // Debounce API calls
+        clearTimeout(locationSearchTimer);
+        locationSearchTimer = setTimeout(async () => {
+            try {
+                const res = await fetch(`${API_URL}/map/search?q=${encodeURIComponent(query)}`);
+                if (!res.ok) {
+                    if (resultsEl) resultsEl.classList.add('d-none');
+                    applyMapFilters();
+                    return;
+                }
+
+                const results = await res.json();
+                if (!results || results.length === 0) {
+                    if (resultsEl) {
+                        resultsEl.innerHTML = '<div class="location-search-item"><span class="text-muted">No matching locations found</span></div>';
+                        resultsEl.classList.remove('d-none');
+                    }
+                    applyMapFilters();
+                    return;
+                }
+
+                // Render results dropdown
+                if (resultsEl) {
+                    resultsEl.innerHTML = results.map(r => {
+                        const typeLabel = r.type === 'state' ? '<span class="ls-type ls-type-state">State</span>'
+                            : r.type === 'district' ? '<span class="ls-type ls-type-district">District</span>'
+                            : r.type === 'city' ? '<span class="ls-type ls-type-city">City</span>'
+                            : '<span class="ls-type ls-type-address">Place</span>';
+
+                        const sub = r.state ? `${r.state}${r.district ? ' · ' + r.district : ''}` : '';
+                        return `
+                            <div class="location-search-item" onclick="selectLocationResult('${r.type}', '${(r.name || '').replace(/'/g, "\\'")}', '${(r.state || '').replace(/'/g, "\\'")}', '${(r.district || '').replace(/'/g, "\\'")}', ${r.lat || 'null'}, ${r.lng || 'null'})">
+                                ${typeLabel} <span class="ls-name">${r.name}</span>
+                                ${sub ? `<div class="ls-sub">${sub}</div>` : ''}
+                            </div>
+                        `;
+                    }).join('');
+                    resultsEl.classList.remove('d-none');
+                }
+            } catch (e) {
+                console.warn('Location search error:', e.message);
+                if (resultsEl) resultsEl.classList.add('d-none');
+                applyMapFilters();
+            }
+        }, 400);
+    }
+
+    function selectLocationResult(type, name, state, district, lat, lng) {
+        const input = document.getElementById('mapSearchInput');
+        const resultsEl = document.getElementById('locationSearchResults');
+
+        if (input) input.value = name;
+
+        // Apply appropriate filters based on selected location type
+        if (type === 'state' && state === '' && name) {
+            // Select state in dropdown if it exists
+            const stateSelect = document.getElementById('filterState');
+            if (stateSelect) {
+                const matchingOption = Array.from(stateSelect.options).find(o => o.value === name);
+                if (matchingOption) {
+                    stateSelect.value = name;
+                    onStateFilterChange();
+                } else {
+                    // Add the state as a custom option
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    stateSelect.appendChild(opt);
+                    stateSelect.value = name;
+                    onStateFilterChange();
+                }
+            }
+        } else if (type === 'district' && name) {
+            // Select state if known, then district
+            const stateSelect = document.getElementById('filterState');
+            if (state && stateSelect) {
+                const matchingOption = Array.from(stateSelect.options).find(o => o.value === state);
+                if (matchingOption) stateSelect.value = state;
+            }
+            onStateFilterChange().then(() => {
+                const distSelect = document.getElementById('filterDistrict');
+                if (distSelect) {
+                    const matchingOption = Array.from(distSelect.options).find(o => o.value === name);
+                    if (matchingOption) distSelect.value = name;
+                }
+                applyMapFilters();
+            });
+        } else if (type === 'city' && name) {
+            // Set city filter directly
+            const cityInput = document.getElementById('filterCity');
+            if (cityInput) cityInput.value = name;
+            applyMapFilters();
+        } else if (type === 'address' && lat && lng) {
+            // Center map on the geocoded address point
+            map.setView([parseFloat(lat), parseFloat(lng)], 13);
+        }
+
+        // Hide results dropdown
+        if (resultsEl) resultsEl.classList.add('d-none');
+    }
+
+    // ─── Fetch Map Data ─────────────────────────────────────────────────────
+    async function fetchMapData() {
+        try {
+            const [donRes, ngoRes] = await Promise.all([
+                fetch(`${API_URL}/map/donations`).catch(err => { console.error('Donation fetch failed:', err); return null; }),
+                fetch(`${API_URL}/map/ngos`).catch(err => { console.error('NGO fetch failed:', err); return null; })
+            ]);
+
+            if (donRes && donRes.ok) {
+                mapDonations = await donRes.json();
+            } else {
+                mapDonations = [];
+            }
+
+            if (ngoRes && ngoRes.ok) {
+                mapNGOs = await ngoRes.json();
+            } else {
+                mapNGOs = [];
+            }
+
+            renderMarkers();
+        } catch (err) {
+            console.error('Critical map fetch error:', err);
+            renderMarkers();
+        }
+    }
+
+    // ─── Build Popup Content ────────────────────────────────────────────────
+    function buildDonationPopup(don) {
+        const donorName = don.donor ? (don.donor.fullName || 'Anonymous') : (don.donorName || 'Anonymous');
+        const donorPhone = don.donor ? (don.donor.mobileNumber || don.donorPhone || 'N/A') : (don.donorPhone || 'N/A');
+        const address = don.address || don.location || 'N/A';
+        const city = don.city ? `${don.city}, ${don.state || ''}` : '';
+        const statusBadge = don.status === 'available'
+            ? '<span class="badge bg-success map-popup-badge">🍲 Available</span>'
+            : don.status === 'picked up'
+                ? '<span class="badge bg-violet map-popup-badge" style="background:#8b5cf6;">🚚 In Transit</span>'
+                : don.status === 'delivered'
+                    ? '<span class="badge bg-info map-popup-badge">✅ Delivered</span>'
+                    : '<span class="badge bg-warning text-dark map-popup-badge">🤝 Accepted</span>';
+
+        return `
+            <div style="min-width: 260px; max-width: 300px;">
+                <div class="map-popup-title">🍲 ${don.foodName || 'Food Donation'}</div>
+                <div class="mb-1">${statusBadge}</div>
+                <hr class="my-1">
+                <div>
+                    <div class="map-popup-detail"><strong>👤 Donor:</strong> ${donorName}</div>
+                    <div class="map-popup-detail"><strong>📦 Quantity:</strong> ${don.quantity || 'N/A'}</div>
+                    <div class="map-popup-detail"><strong>📍 Address:</strong> ${address}${city ? '<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + city : ''}</div>
+                    <div class="map-popup-detail"><strong>📞 Phone:</strong> ${donorPhone}</div>
+                    <div class="map-popup-detail"><strong>⏳ Expiry:</strong> ${don.expiry || 'N/A'}</div>
+                    <div class="map-popup-detail"><strong>🤖 AI Score:</strong> ${don.aiScore ? don.aiScore + '%' : 'Pending'}</div>
+                    <div class="map-popup-detail"><strong>🏢 Nearest NGO:</strong> ${don.nearestNGO || 'Auto-matching'}</div>
+                    <div class="map-popup-detail"><strong>🚚 Est. Pickup:</strong> ${don.eta || 'Calculating...'}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    function buildNGOPopup(ngo) {
+        return `
+            <div style="min-width: 240px;">
+                <div class="map-popup-title">🏢 ${ngo.fullName || 'NGO Center'}</div>
+                <p class="mb-1"><span class="badge bg-primary map-popup-badge">Registered NGO</span></p>
+                <hr class="my-1">
+                <div>
+                    <div class="map-popup-detail"><strong>📍 Base Area:</strong> ${ngo.location || ngo.city || 'N/A'}${ngo.state ? ', ' + ngo.state : ''}</div>
+                    <div class="map-popup-detail"><strong>✉️ Email:</strong> ${ngo.email || 'N/A'}</div>
+                    <div class="map-popup-detail"><strong>📞 Phone:</strong> ${ngo.mobileNumber || 'N/A'}</div>
+                    <div class="map-popup-detail"><strong>⚡ Status:</strong> Active Rescue Partner</div>
+                </div>
+            </div>
+        `;
+    }
+
+    // ─── Render All Markers with Filters ────────────────────────────────────
+    function renderMarkers() {
+        if (!map || !markersLayer) {
+            console.error('Map or markersLayer not ready');
+            return;
+        }
+
+        markersLayer.clearLayers();
+        if (heatLayer) {
+            map.removeLayer(heatLayer);
+            heatLayer = L.heatLayer([], { radius: 35, blur: 20, maxZoom: 12, minOpacity: 0.4 });
+        }
+
+        const searchQuery = (document.getElementById('mapSearchInput').value || '').toLowerCase().trim();
+        const stateFilter = document.getElementById('filterState').value;
+        const districtFilter = document.getElementById('filterDistrict') ? document.getElementById('filterDistrict').value : 'all';
+        const cityFilter = (document.getElementById('filterCity').value || '').toLowerCase().trim();
+        const catFilter = document.getElementById('filterCategory').value;
+        const statusFilter = document.getElementById('filterStatus').value;
+        const dateFilter = document.getElementById('filterDate') ? document.getElementById('filterDate').value : '';
+
+        let donCount = 0;
+        let ngoCount = 0;
+        const heatPoints = [];
+
+        // ─── Render Donations ─────────────────────────────────────────────
+        if (statusFilter === 'all' || statusFilter === 'available' || statusFilter === 'accepted' || statusFilter === 'picked up' || statusFilter === 'delivered') {
+            mapDonations.forEach(don => {
+                // Status Filter
+                if (statusFilter !== 'all' && statusFilter !== 'ngo' && don.status !== statusFilter) return;
+                if (statusFilter === 'available' && don.status !== 'available') return;
+                if (statusFilter === 'accepted' && don.status !== 'accepted' && don.status !== 'claimed') return;
+                if (statusFilter === 'picked up' && don.status !== 'picked up') return;
+                if (statusFilter === 'delivered' && don.status !== 'delivered') return;
+
+                // State Filter
+                if (stateFilter !== 'all' && don.state !== stateFilter) return;
+
+                // District Filter
+                if (districtFilter !== 'all' && don.district !== districtFilter) return;
+
+                // City Filter
+                if (cityFilter) {
+                    const donCity = (don.city || don.location || '').toLowerCase();
+                    if (!donCity.includes(cityFilter)) return;
+                }
+
+                // Category Filter
+                if (catFilter !== 'all') {
+                    const donCat = (don.category || '').toLowerCase();
+                    const fn = (don.foodName || '').toLowerCase();
+                    const catLower = catFilter.toLowerCase();
+                    if (!donCat.includes(catLower) && !fn.includes(catLower)) return;
+                }
+
+                // Date Filter
+                if (dateFilter) {
+                    const donDate = new Date(don.createdAt || Date.now());
+                    const donDateStr = donDate.toISOString().split('T')[0];
+                    if (donDateStr !== dateFilter) return;
+                }
+
+                // Search Filter
+                if (searchQuery) {
+                    const searchable = `${don.foodName} ${don.donorName || ''} ${don.city || ''} ${don.district || ''} ${don.state || ''} ${don.location || ''}`.toLowerCase();
+                    if (!searchable.includes(searchQuery)) return;
+                }
+
+                // Determine icon
+                let icon = iconDonation;
+                if (don.status === 'accepted' || don.status === 'claimed') icon = iconAccepted;
+                else if (don.status === 'picked up') icon = iconPickup;
+                else if (don.status === 'delivered') icon = iconDelivered;
+
+                // Get coordinates (supports both lat/lng and latitude/longitude)
+                const donLat = don.lat || don.latitude;
+                const donLng = don.lng || don.longitude;
+                if (!donLat || !donLng) return;
+
+                // Add heat point (all donations with valid coords)
+                heatPoints.push([parseFloat(donLat), parseFloat(donLng), 0.7]);
+
+                const marker = L.marker([parseFloat(donLat), parseFloat(donLng)], { icon }).bindPopup(buildDonationPopup(don));
+                markersLayer.addLayer(marker);
+                donCount++;
+            });
+        }
+
+        // ─── Render NGOs ──────────────────────────────────────────────────
+        if (statusFilter === 'all' || statusFilter === 'ngo') {
+            mapNGOs.forEach(ngo => {
+                // Get coordinates (supports both lat/lng and latitude/longitude)
+                const ngoLat = ngo.lat || ngo.latitude;
+                const ngoLng = ngo.lng || ngo.longitude;
+                if (!ngoLat || !ngoLng) return;
+
+                // State Filter
+                if (stateFilter !== 'all' && ngo.state !== stateFilter) return;
+
+                // City Filter
+                if (cityFilter) {
+                    const ngoCity = (ngo.city || ngo.location || '').toLowerCase();
+                    if (!ngoCity.includes(cityFilter)) return;
+                }
+
+                // Search Filter
+                if (searchQuery) {
+                    const searchable = `${ngo.fullName} ${ngo.city || ''} ${ngo.state || ''} ${ngo.location || ''}`.toLowerCase();
+                    if (!searchable.includes(searchQuery)) return;
+                }
+
+                const marker = L.marker([parseFloat(ngoLat), parseFloat(ngoLng)], { icon: iconNGO }).bindPopup(buildNGOPopup(ngo));
+                markersLayer.addLayer(marker);
+                ngoCount++;
+            });
+        }
+
+        // Add heat layer if toggle is on
+        const heatToggle = document.getElementById('heatmapToggle');
+        if (heatToggle && heatToggle.checked && heatPoints.length > 0) {
+            heatLayer = L.heatLayer(heatPoints, { radius: 35, blur: 20, maxZoom: 12, minOpacity: 0.4 });
+            heatLayer.addTo(map);
+        }
+
+        // Update summary
+        const summaryEl = document.getElementById('mapStatsSummary');
+        if (summaryEl) {
+            summaryEl.innerHTML = `
+                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2 me-2">🍲 Donations: ${donCount}</span>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill px-3 py-2">🏢 NGOs: ${ngoCount}</span>
+            `;
+        }
+
+        // Auto-zoom to fit ALL markers only on initial load (All India view).
+        // Filter changes keep the current viewport so users can see results in context.
+        if (!hasFittedBounds && markersLayer.getLayers().length > 0) {
+            map.fitBounds(markersLayer.getBounds(), { padding: [40, 40], maxZoom: 13 });
+            hasFittedBounds = true;
+        }
+    }
+
+    // ─── Toggle Heatmap ─────────────────────────────────────────────────────
+    function toggleHeatmap() {
+        const toggle = document.getElementById('heatmapToggle');
+        if (toggle && toggle.checked) {
+            renderMarkers(); // re-render with heat on
+        } else {
+            renderMarkers(); // re-render with heat off
+        }
+    }
+
+    // ─── Filter + Search + Reset ────────────────────────────────────────────
+    function applyMapFilters() {
+        renderMarkers();
+    }
+
+    function fitMapToMarkers() {
+        if (markersLayer.getLayers().length > 0) {
+            map.fitBounds(markersLayer.getBounds(), { padding: [40, 40], maxZoom: 13 });
+        } else if (mapDonations.length > 0) {
+            map.setView(INDIA_CENTER, 5);
+        }
+    }
+
+    function setupFilterListeners() {
+        document.getElementById('filterState').addEventListener('change', onStateFilterChange);
+        if (document.getElementById('filterDistrict')) {
+            document.getElementById('filterDistrict').addEventListener('change', onDistrictFilterChange);
+        }
+        document.getElementById('filterCity').addEventListener('input', applyMapFilters);
+        document.getElementById('filterCategory').addEventListener('change', applyMapFilters);
+        document.getElementById('filterStatus').addEventListener('change', applyMapFilters);
+        if (document.getElementById('filterDate')) {
+            document.getElementById('filterDate').addEventListener('change', applyMapFilters);
+        }
+        document.getElementById('heatmapToggle').addEventListener('change', toggleHeatmap);
+
+        // Close location search dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const resultsEl = document.getElementById('locationSearchResults');
+            const searchInput = document.getElementById('mapSearchInput');
+            if (resultsEl && searchInput && !searchInput.contains(e.target) && !e.target.closest('.location-search-results')) {
+                resultsEl.classList.add('d-none');
+            }
+        });
+    }
+</script>
+</body>
+</html>

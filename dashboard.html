@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>System Dashboard - FOODBRIDGE AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/premium.css">
+    <!-- Chart.js for Premium Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+
+<body class="premium-body dashboard-page d-flex flex-column min-vh-100">
+
+<!-- FOODBRIDGE HERO BACKGROUND (fixed photo + dark navy overlay, see premium.css section 13) -->
+<div class="dashboard-bg-layer"></div>
+
+<!-- FLOATING GLASSNAV -->
+<nav class="navbar navbar-expand-lg navbar-floating">
+    <div class="container-fluid px-0">
+        <button class="btn btn-light me-2 border d-lg-none" onclick="toggleSidebar()">☰</button>
+        <a class="navbar-brand fb-brand" href="index.html">
+            <img src="images/foodbridge.logo.png" alt="FOODBRIDGE AI Logo" class="fb-logo-img">
+            <span class="fb-brand-text">
+                <span class="fb-wordmark">
+                    <span class="fb-g">FOOD</span><span class="fb-b">BRIDGE</span>
+                    <span class="fb-ai-badge">AI</span>
+                </span>
+                <span class="fb-tagline">REDUCE WASTE. FEED HOPE. CREATE IMPACT.</span>
+            </span>
+        </a>
+        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#menu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="menu">
+            <!-- Dynamic navbar content populated by script.js -->
+        </div>
+    </div>
+</nav>
+
+<div class="app-layout">
+    <!-- COLLAPSIBLE SIDEBAR -->
+    <aside class="sidebar-wrapper">
+        <div class="p-3 border-bottom d-flex align-items-center justify-content-between">
+            <span class="fw-bold text-success sidebar-header-title">📊 Analytics Menu</span>
+            <button class="btn btn-sm btn-light border" onclick="toggleSidebar()" title="Toggle Sidebar">◀</button>
+        </div>
+        <ul class="sidebar-nav">
+            <li class="sidebar-nav-item">
+                <a href="dashboard.html" class="sidebar-nav-link active">
+                    <span class="sidebar-nav-icon">📊</span>
+                    <span class="sidebar-text">Overview</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="findfood.html" class="sidebar-nav-link">
+                    <span class="sidebar-nav-icon">🍱</span>
+                    <span class="sidebar-text">Find Food</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="donate.html" class="sidebar-nav-link">
+                    <span class="sidebar-nav-icon">🌱</span>
+                    <span class="sidebar-text">Donate Food</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="hunger-map.html" class="sidebar-nav-link">
+                    <span class="sidebar-nav-icon">🗺️</span>
+                    <span class="sidebar-text">Hunger Map</span>
+                </a>
+            </li>
+            <li class="sidebar-nav-item">
+                <a href="profile.html" class="sidebar-nav-link">
+                    <span class="sidebar-nav-icon">👤</span>
+                    <span class="sidebar-text">My Profile</span>
+                </a>
+            </li>
+        </ul>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="main-content-with-sidebar">
+        <div class="dashboard-hero glass-card-premium p-4 p-lg-5 mb-4 reveal position-relative">
+            <div class="aurora-ring"></div>
+            <div class="row g-4 align-items-center">
+                <div class="col-lg-8">
+                     <span class="hero-pill-premium mb-3">📊 Mission control</span>
+                     <h1 class="fw-extrabold display-6 mb-2">System <span class="text-green-accent">Intelligence</span> Dashboard</h1>
+                     <p class="text-secondary mb-4">Real-time impact metrics, distribution rates, and AI recommendations now presented in a calm, premium workspace.</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <button class="btn btn-success btn-sm rounded-pill px-3" onclick="loadDashboardStats()">🔄 Refresh live metrics</button>
+                        <a href="findfood.html" class="btn btn-outline-success btn-sm rounded-pill px-3">Browse listings</a>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                 <div class="dashboard-highlight-card">
+                     <div class="premium-chip mb-2">Live impact pulse</div>
+                     <div class="d-flex align-items-center gap-2 mb-3">
+                         <span class="dot"></span>
+                         <span class="text-green-accent fw-bold small" id="hero-status-text">All systems operational</span>
+                     </div>
+                     <div class="display-6 fw-extrabold text-green-accent" id="hero-main-metric">-- kg</div>
+                     <p class="small text-secondary mb-3" id="hero-metric-label">Food saved from landfills</p>
+                     <div class="dashboard-progress-row mb-3">
+                         <div>
+                             <div class="d-flex justify-content-between small mb-1"><span class="fw-semibold">Pickup readiness</span><span class="text-green-accent" id="hero-pickup-readiness">--%</span></div>
+                             <div class="progress"><div class="progress-bar" id="hero-pickup-bar" style="width: 0%"></div></div>
+                         </div>
+                         <div>
+                             <div class="d-flex justify-content-between small mb-1"><span class="fw-semibold">NGO response</span><span class="text-green-accent" id="hero-ngo-response">--%</span></div>
+                             <div class="progress"><div class="progress-bar" id="hero-ngo-bar" style="width: 0%"></div></div>
+                         </div>
+                     </div>
+                     <div class="row g-2">
+                         <div class="col-4">
+                             <div class="glass-card-premium p-2 text-center">
+                                 <div class="fw-bold text-green-accent" id="hero-co2">--</div>
+                                 <small class="text-muted">CO₂ saved</small>
+                             </div>
+                         </div>
+                         <div class="col-4">
+                             <div class="glass-card-premium p-2 text-center">
+                                 <div class="fw-bold text-green-accent" id="hero-meals">--</div>
+                                 <small class="text-muted">Meals</small>
+                             </div>
+                         </div>
+                         <div class="col-4">
+                             <div class="glass-card-premium p-2 text-center">
+                                 <div class="fw-bold text-green-accent" id="hero-donations">--</div>
+                                 <small class="text-muted">Donations</small>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- STATS CARDS -->
+        <div class="row g-4 mb-4">
+            <div class="col-xl-3 col-sm-6 reveal">
+                <div class="glass-card-premium p-4 gradient-card-emerald h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-secondary fw-bold small">Total Donations</span>
+                        <span class="fs-4">🍱</span>
+                    </div>
+                    <div class="display-5 fw-extrabold text-success" id="stats-total-donations">--</div>
+                    <small class="text-muted">Listings registered in system</small>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-sm-6 reveal">
+                <div class="glass-card-premium p-4 gradient-card-emerald text-center h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-secondary fw-bold small">People Fed</span>
+                        <span class="fs-4">👥</span>
+                    </div>
+                    <div class="display-5 fw-extrabold text-success" id="stats-people-fed">--</div>
+                    <small class="text-muted">Estimated meals served</small>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-sm-6 reveal">
+                <div class="glass-card-premium p-4 gradient-card-emerald text-center h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-secondary fw-bold small">NGOs Connected</span>
+                        <span class="fs-4">🏢</span>
+                    </div>
+                    <div class="display-5 fw-extrabold text-success" id="stats-ngos-connected">--</div>
+                    <small class="text-muted">Active rescue partners</small>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-sm-6 reveal">
+                <div class="glass-card-premium p-4 gradient-card-emerald h-100 text-center">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="text-secondary fw-bold small">Food Saved (kg)</span>
+                        <span class="fs-4">⚖️</span>
+                    </div>
+                    <div class="display-5 fw-extrabold text-success" id="stats-food-saved">--</div>
+                    <small class="text-muted">Diverted from landfills</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- QUICK ACTIONS + NOTIFICATIONS -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-4 reveal">
+                <div class="glass-card-premium p-4 h-100">
+                    <h5 class="text-success fw-bold mb-3">⚡ Quick Actions</h5>
+                    <div class="d-flex flex-column gap-2">
+                        <a href="donate.html" class="quick-action-btn"><span>🍲</span> Post Surplus Food</a>
+                        <a href="findfood.html" class="quick-action-btn"><span>🔍</span> Browse Available Food</a>
+                        <a href="hunger-map.html" class="quick-action-btn"><span>🗺️</span> View Hunger Map</a>
+                        <a href="profile.html" class="quick-action-btn"><span>👤</span> Edit Profile</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8 reveal">
+                <div class="glass-card-premium p-4 h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="text-success fw-bold mb-0">🔔 Notifications</h5>
+                        <button class="btn btn-sm btn-outline-success rounded-pill" onclick="loadNotifications()">🔄 Refresh</button>
+                    </div>
+                    <div id="notificationList">
+                        <p class="text-muted small text-center py-3 mb-0">Loading notifications...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHART.JS ANALYTICS -->
+        <div class="row g-4 mb-4">
+            <div class="col-lg-7 reveal">
+                <div class="glass-card-premium p-4">
+                    <h5 class="text-success fw-bold mb-1">📈 Weekly listing growth</h5>
+                    <p class="small text-secondary mb-3">Donation activity tracked over the past weeks.</p>
+                    <canvas id="chartDonations" height="120"></canvas>
+                </div>
+            </div>
+            <div class="col-lg-5 reveal">
+                <div class="glass-card-premium p-4 h-100">
+                    <h5 class="text-success fw-bold mb-4">🥗 Resource categories</h5>
+                    <canvas id="chartCategories" height="230"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- RECENT DONATIONS TABLE -->
+        <div class="table-responsive-premium shadow-sm reveal">
+            <div class="p-4 border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold text-success m-0">Recent surplus donations</h5>
+                <span class="badge bg-success-subtle text-success rounded-pill">Live activity</span>
+            </div>
+            <table class="table-premium">
+                <thead>
+                    <tr>
+                        <th>Food Item</th>
+                        <th>Quantity</th>
+                        <th>Pickup Area</th>
+                        <th>Status</th>
+                        <th>AI Matching</th>
+                    </tr>
+                </thead>
+                <tbody id="recentDonationsTableBody">
+                    <tr>
+                        <td colspan="5" class="text-center py-5 text-muted">
+                            <div class="spinner-border text-success spinner-border-sm me-2" role="status"></div>
+                            Loading dashboard details...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ABOUT US SECTION -->
+        <section class="about-us-section mb-5 reveal">
+            <div class="glass-card-premium p-4 p-lg-5">
+                <div class="row g-4 align-items-center">
+                    <div class="col-lg-2 text-center text-lg-start">
+                        <div class="about-icon-wrapper mb-3 mb-lg-0">
+                            <span class="display-4">🌉</span>
+                        </div>
+                    </div>
+                    <div class="col-lg-10">
+                        <span class="hero-pill-premium mb-3">About FoodBridge AI</span>
+                        <h2 class="fw-extrabold display-7 mb-3">Bridging Surplus Food with Those Who Need It Most</h2>
+                        <p class="text-secondary mb-3">
+                            FoodBridge AI is a smart, community-driven platform that connects surplus food from donors — restaurants, households, events, and businesses — with NGOs, volunteers, and communities facing food insecurity. By using intelligent matching and real-time logistics, we ensure good food reaches people instead of landfills.
+                        </p>
+                        <p class="text-secondary mb-3">
+                            Our ecosystem brings together <strong class="text-success">donors</strong>, <strong class="text-success">NGOs</strong>, and <strong class="text-success">volunteer pickup partners</strong> to coordinate safe, timely food rescue operations. Every donation is tracked, matched, and delivered with transparency.
+                        </p>
+                        <p class="text-secondary mb-0">
+                            <strong class="text-success">Our mission:</strong> Reduce food waste and hunger by building the fastest, most reliable food rescue network — powered by AI, driven by compassion.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CONTACT US SECTION -->
+        <section class="contact-us-section mb-5 reveal">
+            <div class="glass-card-premium p-4 p-lg-5">
+                <span class="hero-pill-premium mb-3">Contact Us</span>
+                <h2 class="fw-extrabold display-7 mb-4">Get in Touch</h2>
+
+                <div class="row g-4">
+                    <!-- Contact Info -->
+                    <div class="col-lg-4">
+                        <div class="d-flex flex-column gap-3">
+                            <div class="d-flex align-items-start gap-3">
+                                <span class="fs-4">📧</span>
+                                <div>
+                                    <div class="fw-bold text-success">Email</div>
+                                    <p class="text-secondary small mb-0">support@foodbridge.ai</p>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-start gap-3">
+                                <span class="fs-4">📞</span>
+                                <div>
+                                    <div class="fw-bold text-success">Phone</div>
+                                    <p class="text-secondary small mb-0">+91 98765 43210</p>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-start gap-3">
+                                <span class="fs-4">📍</span>
+                                <div>
+                                    <div class="fw-bold text-success">Location</div>
+                                    <p class="text-secondary small mb-0">Bengaluru, India</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Form -->
+                    <div class="col-lg-8">
+                        <form id="contactForm" novalidate>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="contactName" class="form-label fw-bold text-secondary small">Name</label>
+                                    <input type="text" class="form-control-premium" id="contactName" placeholder="Your full name" required>
+                                    <div class="form-error-text text-danger" id="contactNameError" style="display:none;">Please enter your name.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="contactEmail" class="form-label fw-bold text-secondary small">Email</label>
+                                    <input type="email" class="form-control-premium" id="contactEmail" placeholder="name@example.com" required>
+                                    <div class="form-error-text text-danger" id="contactEmailError" style="display:none;">Please enter a valid email.</div>
+                                </div>
+                                <div class="col-12">
+                                    <label for="contactSubject" class="form-label fw-bold text-secondary small">Subject</label>
+                                    <input type="text" class="form-control-premium" id="contactSubject" placeholder="How can we help?" required>
+                                    <div class="form-error-text text-danger" id="contactSubjectError" style="display:none;">Please enter a subject.</div>
+                                </div>
+                                <div class="col-12">
+                                    <label for="contactMessage" class="form-label fw-bold text-secondary small">Message</label>
+                                    <textarea class="form-control-premium" id="contactMessage" rows="4" placeholder="Tell us more..." required></textarea>
+                                    <div class="form-error-text text-danger" id="contactMessageError" style="display:none;">Please enter your message.</div>
+                                </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-success rounded-pill px-4">Send Message</button>
+                                <p class="small text-muted mt-2 mb-0">We'll get back to you within 24-48 hours.</p>
+                            </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<!-- AI RECOMMENDATIONS MODAL -->
+<div class="modal fade" id="aiMatchingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content glass-card-premium border-0 p-3">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-success fs-4">🤖 AI Smart NGO Recommendations</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pt-3">
+                <div class="badge bg-light text-dark border p-2 mb-3 rounded-pill" id="aiMatchingListingName">Food Listing: --</div>
+
+                <h6 class="fw-bold text-success mb-2">⭐ Top Recommended NGO Match</h6>
+                <div id="aiBestNgoCard" class="mb-4">
+                    <!-- Loaded dynamically -->
+                </div>
+
+                <h6 class="fw-bold text-success mb-3">📋 Ranked NGO Match Candidates</h6>
+                <div class="table-responsive-premium">
+                    <table class="table-premium">
+                        <thead>
+                            <tr>
+                                <th>NGO Name</th>
+                                <th>AI Match Score</th>
+                                <th>Distance</th>
+                                <th>Est. Pickup</th>
+                                <th>Priority</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="aiRecommendationsTableBody">
+                            <!-- Loaded dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-secondary px-4 btn-sm rounded-pill" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="py-4 mt-auto border-top">
+    <div class="container text-center">
+        <p class="text-muted mb-0">🌱 FOODBRIDGE AI &copy; 2026. Empowering communities to end food waste.</p>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/script.js"></script>
+<script>
+    window.addEventListener('DOMContentLoaded', async () => {
+        // Load notifications
+        await loadNotifications();
+
+        // Load analytics charts
+        try {
+            const res = await fetch(`${API_URL}/stats/analytics`);
+            console.log('Analytics API response status:', res.status);
+            const analytics = await res.json();
+            console.log('Analytics data received:', analytics);
+            console.log('monthlyTrends:', analytics.monthlyTrends);
+            console.log('foodCategories:', analytics.foodCategories);
+            console.log('monthlyTrends.labels length:', analytics.monthlyTrends?.labels?.length);
+            console.log('monthlyTrends.data length:', analytics.monthlyTrends?.data?.length);
+            console.log('foodCategories.labels length:', analytics.foodCategories?.labels?.length);
+            console.log('foodCategories.counts length:', analytics.foodCategories?.counts?.length);
+
+            if (analytics.monthlyTrends && analytics.monthlyTrends.labels && analytics.monthlyTrends.labels.length > 0) {
+                const ctx1 = document.getElementById('chartDonations');
+                if (ctx1) {
+                    new Chart(ctx1, {
+                        type: 'line',
+                        data: {
+                            labels: analytics.monthlyTrends.labels,
+                            datasets: [{
+                                label: 'Donations',
+                                data: analytics.monthlyTrends.data,
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16,185,129,0.12)',
+                                borderWidth: 2.5,
+                                fill: true,
+                                tension: 0.4,
+                                pointBackgroundColor: '#10b981',
+                                pointRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                x: { grid: { color: 'rgba(148,163,184,0.08)' } },
+                                y: { grid: { color: 'rgba(148,163,184,0.08)' }, beginAtZero: true }
+                            }
+                        }
+                    });
+                }
+            }
+
+            if (analytics.foodCategories && analytics.foodCategories.labels && analytics.foodCategories.labels.length > 0) {
+                const ctx2 = document.getElementById('chartCategories');
+                if (ctx2) {
+                    new Chart(ctx2, {
+                        type: 'doughnut',
+                        data: {
+                            labels: analytics.foodCategories.labels,
+                            datasets: [{
+                                data: analytics.foodCategories.counts,
+                                backgroundColor: ['#10b981','#3b82f6','#f59e0b','#8b5cf6','#ef4444','#6b7280'],
+                                borderWidth: 2,
+                                borderColor: 'rgba(255,255,255,0.1)'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } }
+                            },
+                            cutout: '60%'
+                        }
+                    });
+                }
+            }
+        } catch (err) {
+            console.warn('Analytics chart load failed:', err.message);
+        }
+    });
+
+    // Contact form validation
+    const contactForm = document.getElementById('contactForm');
+    if (contactForm) {
+        contactForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            let isValid = true;
+
+            const name = document.getElementById('contactName');
+            const email = document.getElementById('contactEmail');
+            const subject = document.getElementById('contactSubject');
+            const message = document.getElementById('contactMessage');
+
+            const nameError = document.getElementById('contactNameError');
+            const emailError = document.getElementById('contactEmailError');
+            const subjectError = document.getElementById('contactSubjectError');
+            const messageError = document.getElementById('contactMessageError');
+
+            [nameError, emailError, subjectError, messageError].forEach(el => el.style.display = 'none');
+
+            if (!name.value.trim()) {
+                nameError.style.display = 'block';
+                isValid = false;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email.value.trim() || !emailRegex.test(email.value.trim())) {
+                emailError.style.display = 'block';
+                isValid = false;
+            }
+
+            if (!subject.value.trim()) {
+                subjectError.style.display = 'block';
+                isValid = false;
+            }
+
+            if (!message.value.trim()) {
+                messageError.style.display = 'block';
+                isValid = false;
+            }
+
+            if (isValid) {
+                try {
+                    const res = await fetch(`${API_URL}/contact`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: name.value.trim(),
+                            email: email.value.trim(),
+                            subject: subject.value.trim(),
+                            message: message.value.trim()
+                        })
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        alert('Thank you for contacting FoodBridge AI! We will get back to you soon.');
+                        contactForm.reset();
+                    } else {
+                        alert(data.error || 'Failed to send message. Please try again.');
+                    }
+                } catch (err) {
+                    alert('Network error. Please try again later.');
+                }
+            }
+        });
+    }
+
+    async function loadNotifications() {
+        const container = document.getElementById('notificationList');
+        if (!container) return;
+
+        const user = JSON.parse(localStorage.getItem('user') || sessionStorage.getItem('user'));
+        if (!user) {
+            container.innerHTML = '<p class="text-muted small text-center py-3 mb-0">Login to see notifications.</p>';
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_URL}/notifications?email=${encodeURIComponent(user.email)}`);
+            const data = await res.json();
+
+            if (!data.data || data.data.length === 0) {
+                container.innerHTML = '<p class="text-muted small text-center py-3 mb-0">No notifications yet. Your rescue updates will appear here.</p>';
+                return;
+            }
+
+            container.innerHTML = data.data.slice(0, 5).map(n => `
+                <div class="notification-item">
+                    <span class="fs-5">${n.type === 'donation_accepted' ? '🤝' : n.type === 'pickup_started' ? '🚚' : n.type === 'delivered' ? '✅' : '🔔'}</span>
+                    <div>
+                        <div class="fw-bold small ${n.isRead ? 'text-secondary' : 'text-success'}">${n.title}</div>
+                        <p class="text-muted small mb-0">${n.message}</p>
+                        <small class="text-muted" style="font-size: 0.7rem;">${new Date(n.createdAt).toLocaleString()}</small>
+                    </div>
+                </div>
+            `).join('');
+        } catch (err) {
+            container.innerHTML = '<p class="text-muted small text-center py-3 mb-0">Unable to load notifications.</p>';
+        }
+    }
+</script>
+</body>
+</html>
