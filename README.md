@@ -13,7 +13,7 @@ The platform allows donors to list surplus food, NGOs to discover and claim avai
 ## 🌐 Live Demo
 
 🚀 **Live Application:**  
-https://foodbridge-ai.vercel.app/
+(https://foodbridge-ai-ten.vercel.app/)
 
 > Replace the URL above with your actual Vercel URL if your deployed URL is different.
 
