@@ -35,12 +35,12 @@ const seedAdmin = async () => {
 };
 
 const connectDB = async () => {
-    if (!process.env.MONGO_URI) {
+    if (!process.env.MONGODB_URI) {
         console.error(
-            'SECURITY ERROR: MONGO_URI environment variable is not configured'
+            'SECURITY ERROR: MONGODB_URI environment variable is not configured'
         );
 
-        throw new Error('MONGO_URI environment variable is required');
+        throw new Error('MONGODB_URI environment variable is required');
     }
 
     // Already connected
@@ -54,7 +54,7 @@ const connectDB = async () => {
     }
 
     connectionPromise = mongoose
-        .connect(process.env.MONGO_URI, {
+        .connect(process.env.MONGODB_URI, {
             serverSelectionTimeoutMS: 5000
         })
         .then(async () => {
