@@ -13,7 +13,36 @@ const app = express();
 
 const PORT = process.env.PORT || 5000;
 
-// Initialize database connection
+// CORS configuration - allow configured origin or all origins
+const corsOptions = {
+    origin: function (origin, callback) {
+        // Allow requests with no origin (mobile apps, curl, etc.)
+        if (!origin) return callback(null, true);
+        
+        // In development or if FRONTEND_URL is not set, allow all
+        const allowedOrigins = process.env.FRONTEND_URL 
+            ? [process.env.FRONTEND_URL, `http://localhost:${PORT}`]
+            : true;
+        
+        if (allowedOrigins === true || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        
+        // Allow any localhost origin for development
+        if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+            return callback(null, true);
+        }
+        
+        callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
+
+// Remove duplicate cors middleware
 const initializeDatabase = async () => {
     try {
         await connectDB();
@@ -28,8 +57,6 @@ const initializeDatabase = async () => {
 initializeDatabase();
 
 // Security middleware
-app.use(cors());
-
 app.use(helmet({
     contentSecurityPolicy: false
 }));

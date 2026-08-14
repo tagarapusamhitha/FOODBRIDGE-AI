@@ -1101,7 +1101,13 @@ async function handleLoginSubmit(e) {
             body: JSON.stringify({ email, password })
         });
 
-        const data = await response.json();
+        let data;
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+            data = await response.json();
+        } else {
+            data = { error: `Server error (${response.status})` };
+        }
 
         if (response.ok) {
             const storage = rememberMe ? localStorage : sessionStorage;
@@ -1202,7 +1208,13 @@ async function handleSignupSubmit(e) {
             body: JSON.stringify(body)
         });
 
-        const data = await response.json();
+        let data;
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+            data = await response.json();
+        } else {
+            data = { error: `Server error (${response.status})` };
+        }
 
         if (response.ok) {
             showToast("Registration successful! Please login. 🎉");
