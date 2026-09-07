@@ -57,8 +57,11 @@ const initializeDatabase = async () => {
     }
 };
 
-// Initialize DB on app startup (non-blocking)
-initializeDatabase();
+// Local Node runs initialize at startup; Vercel waits in api/index.js so the
+// serverless handler controls the single cached connection attempt.
+if (!process.env.VERCEL) {
+    initializeDatabase();
+}
 
 // Security middleware
 app.use(helmet({

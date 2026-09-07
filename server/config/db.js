@@ -2,6 +2,31 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 
 let connectionPromise = null;
+let diagnosticsLogged = false;
+
+const logConnectionDiagnostics = () => {
+    if (diagnosticsLogged) return;
+    diagnosticsLogged = true;
+
+    const uri = process.env.MONGODB_URI || '';
+    let uriShapeValid = false;
+    try {
+        const parsedUri = new URL(uri);
+        uriShapeValid = parsedUri.protocol === 'mongodb:' || parsedUri.protocol === 'mongodb+srv:';
+    } catch (error) {
+        uriShapeValid = false;
+    }
+
+    console.log('MongoDB configuration diagnostics:', {
+        uriExists: Boolean(uri),
+        uriStartsWithMongoDBSrv: uri.startsWith('mongodb+srv://'),
+        uriLength: uri.length,
+        uriShapeValid,
+        nodeEnvironment: process.env.NODE_ENV || 'undefined',
+        vercelDetected: Boolean(process.env.VERCEL),
+        vercelRegionConfigured: Boolean(process.env.VERCEL_REGION)
+    });
+};
 
 const seedAdmin = async () => {
     try {
@@ -35,6 +60,8 @@ const seedAdmin = async () => {
 };
 
 const connectDB = async () => {
+    logConnectionDiagnostics();
+
     if (!process.env.MONGODB_URI) {
         console.error(
             'SECURITY ERROR: MONGODB_URI environment variable is not configured'
