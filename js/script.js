@@ -106,7 +106,7 @@ function showToast(message, type = "success") {
     }
 
     const toast = document.createElement("div");
-    toast.className = `custom-toast border-start border-4 ${type === 'error' ? 'border-danger' : 'border-success'}`;
+    toast.className = `custom-toast toast-${type} border-start border-4 ${type === 'error' ? 'border-danger' : 'border-success'}`;
     
     toast.innerHTML = `
         <div class="d-flex align-items-center">
@@ -525,6 +525,10 @@ async function handleDonateSubmit(e) {
     const district = document.getElementById("districtInput") ? document.getElementById("districtInput").value.trim() : "";
     const state = document.getElementById("stateInput") ? document.getElementById("stateInput").value : "";
     const pincode = document.getElementById("pincodeInput") ? document.getElementById("pincodeInput").value.trim() : "";
+    const country = document.getElementById("countryInput") ? document.getElementById("countryInput").value.trim() : "India";
+    const town = document.getElementById("townInput") ? document.getElementById("townInput").value.trim() : "";
+    const village = document.getElementById("villageInput") ? document.getElementById("villageInput").value.trim() : "";
+    const locality = document.getElementById("localityInput") ? document.getElementById("localityInput").value.trim() : "";
     const rawLat = document.getElementById("latitudeInput") ? document.getElementById("latitudeInput").value : "";
     const rawLng = document.getElementById("longitudeInput") ? document.getElementById("longitudeInput").value : "";
     const imageUrl = document.getElementById("foodImagePreview") && document.getElementById("foodImagePreview").src ? document.getElementById("foodImagePreview").src : "";
@@ -553,7 +557,7 @@ async function handleDonateSubmit(e) {
             body: JSON.stringify({
                 foodName, quantity, location, expiry, expiryDate,
                 category, donorName, donorPhone, donorEmail,
-                address: location, city, district, state, pincode,
+                address: location, country, city, town, village, locality, district, state, pincode,
                 latitude, longitude, imageUrl
             })
         });

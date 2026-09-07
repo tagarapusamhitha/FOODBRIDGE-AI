@@ -154,6 +154,66 @@
             border-bottom: 1px solid #f1f5f9;
         }
 
+        .map-location-search {
+            position: relative;
+            z-index: 1100;
+            margin-bottom: 16px;
+        }
+
+        .map-location-search label {
+            display: block;
+            color: var(--text-navy);
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+
+        .location-search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 280px;
+            overflow-y: auto;
+            margin-top: 6px;
+            padding: 6px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            box-shadow: 0 14px 30px rgba(15, 23, 42, 0.18);
+            z-index: 1200;
+        }
+
+        .location-search-results.d-none {
+            display: none;
+        }
+
+        .location-search-option {
+            display: block;
+            width: 100%;
+            padding: 10px 12px;
+            border: 0;
+            border-radius: 8px;
+            background: transparent;
+            color: #0f172a;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .location-search-option:hover,
+        .location-search-option:focus-visible,
+        .location-search-option.active {
+            background: #dcfce7;
+            color: #14532d;
+            outline: none;
+        }
+
+        .location-search-meta {
+            display: block;
+            color: #64748b;
+            font-size: 0.78rem;
+            margin-top: 2px;
+        }
+
         .footer-tagline {
             text-align: center;
             margin-top: 30px;
@@ -225,6 +285,11 @@
 
     <!-- FILTER PANEL -->
     <div class="filter-panel">
+        <div class="map-location-search">
+            <label for="mapLocationSearch">📍 Search any Indian state, district, city, town, village, locality or pincode</label>
+            <input type="search" id="mapLocationSearch" class="form-input-map" placeholder="Try Hyderabad, Guntur, a district, village or pincode..." autocomplete="off" aria-controls="locationSearchResults" aria-expanded="false">
+            <div id="locationSearchResults" class="location-search-results d-none" role="listbox" aria-label="Location suggestions"></div>
+        </div>
         <div class="row g-3">
             <div class="col-lg-2 col-md-4 filter-group">
                 <label>🔍 Search Food/Donor</label>
@@ -351,6 +416,8 @@
     let markersLayer = L.layerGroup();
     let mapDonations = [];
     let mapNGOs = [];
+    let locationSearchTimer = null;
+    let locationSearchRequest = 0;
 
     // Custom Icons
     const createMarkerIcon = (color, emoji) => L.divIcon({
@@ -387,9 +454,10 @@
     async function initializeFilters() {
         try {
             const res = await fetch(`${API_URL}/map/states`);
+            if (!res.ok) throw new Error(`States request failed (${res.status})`);
             const states = await res.json();
             const stateSelect = document.getElementById('filterState');
-            states.forEach(s => {
+            (Array.isArray(states) ? states : []).forEach(s => {
                 const opt = document.createElement('option');
                 opt.value = s.name;
                 opt.textContent = `${s.name} (${s.count})`;
@@ -404,8 +472,9 @@
         distSelect.innerHTML = '<option value="all">All Districts</option>';
         try {
             const res = await fetch(`${API_URL}/map/districts?state=${state}`);
+            if (!res.ok) throw new Error(`Districts request failed (${res.status})`);
             const districts = await res.json();
-            districts.forEach(d => {
+            (Array.isArray(districts) ? districts : []).forEach(d => {
                 const opt = document.createElement('option');
                 opt.value = d.name;
                 opt.textContent = `${d.name} (${d.count})`;
@@ -423,8 +492,9 @@
         cityList.innerHTML = '';
         try {
             const res = await fetch(`${API_URL}/map/cities?state=${state}&district=${dist}`);
+            if (!res.ok) throw new Error(`Cities request failed (${res.status})`);
             const cities = await res.json();
-            cities.forEach(c => {
+            (Array.isArray(cities) ? cities : []).forEach(c => {
                 const opt = document.createElement('option');
                 opt.value = c.name;
                 cityList.appendChild(opt);
@@ -438,10 +508,18 @@
                 fetch(`${API_URL}/map/donations`),
                 fetch(`${API_URL}/map/ngos`)
             ]);
-            mapDonations = await donRes.json();
-            mapNGOs = await ngoRes.json();
+            if (!donRes.ok || !ngoRes.ok) throw new Error('Map data request failed');
+            const donations = await donRes.json();
+            const ngos = await ngoRes.json();
+            mapDonations = Array.isArray(donations) ? donations : [];
+            mapNGOs = Array.isArray(ngos) ? ngos : [];
             renderMarkers(true); // Fit markers on first load
-        } catch (e) { console.error('Fetch error:', e); }
+        } catch (e) {
+            mapDonations = [];
+            mapNGOs = [];
+            console.error('Fetch error:', e);
+            renderMarkers();
+        }
     }
 
     function renderMarkers(fit = false) {
@@ -458,16 +536,21 @@
         // Donations
         if (status === 'all' || ['available', 'claimed', 'accepted', 'picked up', 'delivered'].includes(status)) {
             mapDonations.forEach(d => {
+                const latitude = Number(d.lat ?? d.latitude);
+                const longitude = Number(d.lng ?? d.longitude);
+                if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
                 if (status !== 'all' && status !== 'claimed' && d.status !== status) return;
                 if (status === 'claimed' && !['claimed', 'accepted', 'picked up'].includes(d.status)) return;
                 
                 if (state !== 'all' && d.state !== state) return;
                 if (dist !== 'all' && d.district !== dist) return;
                 if (city && d.city && !d.city.toLowerCase().includes(city)) return;
-                if (search && !d.foodName.toLowerCase().includes(search) && !d.donor.fullName.toLowerCase().includes(search)) return;
+                const foodName = String(d.foodName || '').toLowerCase();
+                const donorName = String(d.donor?.fullName || d.donorName || '').toLowerCase();
+                if (search && !foodName.includes(search) && !donorName.includes(search)) return;
 
                 if (cat !== 'all') {
-                    const fn = d.foodName.toLowerCase();
+                    const fn = String(d.foodName || '').toLowerCase();
                     const dc = (d.category || '').toLowerCase();
                     if (cat === 'meals' && !dc.includes('meal') && !fn.includes('meal') && !fn.includes('rice')) return;
                     if (cat === 'produce' && !dc.includes('produce') && !fn.includes('veg')) return;
@@ -476,7 +559,7 @@
                 }
 
                 const icon = icons[d.status] || icons.available;
-                const marker = L.marker([d.lat, d.lng], { icon }).bindPopup(createPopup(d, 'donation'));
+                const marker = L.marker([latitude, longitude], { icon }).bindPopup(createPopup(d, 'donation'));
                 markersLayer.addLayer(marker);
                 visibleMarkers.push(marker);
             });
@@ -485,11 +568,14 @@
         // NGOs
         if (status === 'all' || status === 'ngo') {
             mapNGOs.forEach(n => {
+                const latitude = Number(n.lat ?? n.latitude);
+                const longitude = Number(n.lng ?? n.longitude);
+                if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
                 if (state !== 'all' && n.state !== state) return;
                 if (city && n.city && !n.city.toLowerCase().includes(city)) return;
-                if (search && !n.fullName.toLowerCase().includes(search)) return;
+                if (search && !String(n.fullName || '').toLowerCase().includes(search)) return;
 
-                const marker = L.marker([n.lat, n.lng], { icon: icons.ngo }).bindPopup(createPopup(n, 'ngo'));
+                const marker = L.marker([latitude, longitude], { icon: icons.ngo }).bindPopup(createPopup(n, 'ngo'));
                 markersLayer.addLayer(marker);
                 visibleMarkers.push(marker);
             });
@@ -515,7 +601,7 @@
                     <hr class="my-2">
                     <div class="small">
                         <strong>📦 Qty:</strong> ${item.quantity}<br>
-                        <strong>👤 Donor:</strong> ${item.donor.fullName}<br>
+                        <strong>👤 Donor:</strong> ${item.donor?.fullName || item.donorName || 'Anonymous'}<br>
                         <strong>📍 Loc:</strong> ${item.city}, ${item.state}<br>
                         <strong>⏳ Expiry:</strong> ${item.expiry}
                     </div>
@@ -543,7 +629,7 @@
         
         let meals = 0;
         donations.forEach(d => {
-            const match = d.quantity.match(/(\d+)/);
+            const match = String(d.quantity || '').match(/(\d+)/);
             meals += match ? parseInt(match[1]) : 10;
         });
         document.getElementById('stat-meals').textContent = meals;
@@ -566,15 +652,16 @@
         const recent = donations.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
         feed.innerHTML = recent.map(d => `
             <div class="activity-item ${d.status === 'picked up' ? 'pickup' : d.status === 'delivered' ? 'delivery' : ''}">
-                <div class="fw-bold small">${d.foodName}</div>
-                <div class="text-muted" style="font-size:0.7rem">${d.city} • ${d.status}</div>
+                <div class="fw-bold small">${d.foodName || 'Donation'}</div>
+                <div class="text-muted" style="font-size:0.7rem">${d.city || d.district || d.state || 'India'} • ${d.status || 'available'}</div>
             </div>
         `).join('');
 
         // Update Heatmap/High Need (Grouped by City)
         const cityStats = {};
         donations.filter(d => d.status === 'available').forEach(d => {
-            cityStats[d.city] = (cityStats[d.city] || 0) + 1;
+            const locationName = d.city || d.district || d.state || 'India';
+            cityStats[locationName] = (cityStats[locationName] || 0) + 1;
         });
         const sortedCities = Object.entries(cityStats).sort((a, b) => b[1] - a[1]).slice(0, 5);
         document.getElementById('highNeedAreas').innerHTML = sortedCities.map(([city, count]) => `
@@ -592,6 +679,111 @@
         document.getElementById('filterSearch').addEventListener('input', renderMarkers);
         document.getElementById('filterCategory').addEventListener('change', renderMarkers);
         document.getElementById('filterStatus').addEventListener('change', renderMarkers);
+
+        const locationInput = document.getElementById('mapLocationSearch');
+        const resultsEl = document.getElementById('locationSearchResults');
+        if (locationInput && resultsEl) {
+            locationInput.addEventListener('input', () => {
+                clearTimeout(locationSearchTimer);
+                const query = locationInput.value.trim();
+                if (query.length < 3) {
+                    resultsEl.classList.add('d-none');
+                    resultsEl.innerHTML = '';
+                    locationInput.setAttribute('aria-expanded', 'false');
+                    return;
+                }
+
+                resultsEl.classList.remove('d-none');
+                resultsEl.innerHTML = '<div class="px-2 py-2 text-muted small">Searching locations...</div>';
+                locationInput.setAttribute('aria-expanded', 'true');
+                const requestId = ++locationSearchRequest;
+                locationSearchTimer = setTimeout(async () => {
+                    try {
+                        const response = await fetch(`${API_URL}/map/search?q=${encodeURIComponent(query)}`);
+                        if (!response.ok) throw new Error(`Location search failed (${response.status})`);
+                        const results = await response.json();
+                        if (requestId !== locationSearchRequest) return;
+                        renderLocationSuggestions(Array.isArray(results) ? results : []);
+                    } catch (error) {
+                        if (requestId !== locationSearchRequest) return;
+                        resultsEl.innerHTML = '<div class="px-2 py-2 text-danger small">Location search is unavailable.</div>';
+                        console.error('Location search error:', error);
+                    }
+                }, 400);
+            });
+
+            locationInput.addEventListener('keydown', event => {
+                const options = [...resultsEl.querySelectorAll('.location-search-option')];
+                if (!options.length) return;
+                const activeIndex = options.findIndex(option => option.classList.contains('active'));
+                if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+                    event.preventDefault();
+                    const nextIndex = event.key === 'ArrowDown'
+                        ? (activeIndex + 1) % options.length
+                        : (activeIndex - 1 + options.length) % options.length;
+                    options.forEach(option => option.classList.remove('active'));
+                    options[nextIndex].classList.add('active');
+                } else if (event.key === 'Enter' && activeIndex >= 0) {
+                    event.preventDefault();
+                    options[activeIndex].click();
+                } else if (event.key === 'Escape') {
+                    resultsEl.classList.add('d-none');
+                    locationInput.setAttribute('aria-expanded', 'false');
+                }
+            });
+
+            document.addEventListener('click', event => {
+                if (!event.target.closest('.map-location-search')) {
+                    resultsEl.classList.add('d-none');
+                    locationInput.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+    }
+
+    function renderLocationSuggestions(results) {
+        const resultsEl = document.getElementById('locationSearchResults');
+        if (!resultsEl) return;
+        if (!results.length) {
+            resultsEl.innerHTML = '<div class="px-2 py-2 text-muted small">No locations found.</div>';
+            return;
+        }
+        resultsEl.innerHTML = results.map((result, index) => {
+            const context = [result.district, result.state, result.type].filter(Boolean).join(' · ');
+            return `<button type="button" class="location-search-option" role="option" data-result-index="${index}">
+                <strong>${result.name}</strong>
+                <span class="location-search-meta">${context || 'India'}${result.count ? ` · ${result.count} records` : ''}</span>
+            </button>`;
+        }).join('');
+        resultsEl.querySelectorAll('.location-search-option').forEach((option, index) => {
+            option.addEventListener('click', () => selectLocationResult(results[index]));
+        });
+    }
+
+    async function selectLocationResult(result) {
+        const input = document.getElementById('mapLocationSearch');
+        const resultsEl = document.getElementById('locationSearchResults');
+        if (input) input.value = result.name;
+        if (resultsEl) resultsEl.classList.add('d-none');
+
+        let latitude = Number(result.lat);
+        let longitude = Number(result.lng);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+            try {
+                const response = await fetch(`${API_URL}/map/search?q=${encodeURIComponent([result.name, result.state, 'India'].filter(Boolean).join(', '))}`);
+                const refreshed = response.ok ? await response.json() : [];
+                const addressMatch = Array.isArray(refreshed) && refreshed.find(item => Number.isFinite(Number(item.lat)) && Number.isFinite(Number(item.lng)));
+                latitude = Number(addressMatch?.lat);
+                longitude = Number(addressMatch?.lng);
+            } catch (error) {
+                console.error('Location focus error:', error);
+            }
+        }
+        if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+            map.setView([latitude, longitude], 11, { animate: true });
+        } else {
+            renderMarkers();
+        }
     }
 </script>
 </body>

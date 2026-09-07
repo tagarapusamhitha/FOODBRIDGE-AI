@@ -46,7 +46,27 @@ const DonationSchema = new mongoose.Schema({
         default: '',
         trim: true
     },
+    country: {
+        type: String,
+        default: 'India',
+        trim: true
+    },
     city: {
+        type: String,
+        default: '',
+        trim: true
+    },
+    town: {
+        type: String,
+        default: '',
+        trim: true
+    },
+    village: {
+        type: String,
+        default: '',
+        trim: true
+    },
+    locality: {
         type: String,
         default: '',
         trim: true

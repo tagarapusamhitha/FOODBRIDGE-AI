@@ -29,10 +29,6 @@ router.post(
 // Login Route
 router.post(
     '/login',
-    (req, res, next) => {
-        console.log('AUTH ROUTE LOGIN BODY', req.body);
-        next();
-    },
     [
         body('email', 'Please enter a valid email address').isEmail().normalizeEmail(),
         body('password', 'Password is required').notEmpty()

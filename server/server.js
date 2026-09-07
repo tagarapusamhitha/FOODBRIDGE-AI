@@ -13,26 +13,30 @@ const app = express();
 
 const PORT = process.env.PORT || 5000;
 
-// CORS configuration - allow configured origin or all origins
+// CORS configuration - allow configured frontend and local development origins.
+const normalizeOrigin = origin => String(origin || '').trim().replace(/\/$/, '');
+const configuredOrigins = [
+    process.env.FRONTEND_URL,
+    process.env.VERCEL_URL && `https://${process.env.VERCEL_URL}`,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL && `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`,
+    `http://localhost:${PORT}`,
+    `http://127.0.0.1:${PORT}`
+].filter(Boolean).map(normalizeOrigin);
+
 const corsOptions = {
     origin: function (origin, callback) {
         // Allow requests with no origin (mobile apps, curl, etc.)
         if (!origin) return callback(null, true);
-        
-        // In development or if FRONTEND_URL is not set, allow all
-        const allowedOrigins = process.env.FRONTEND_URL 
-            ? [process.env.FRONTEND_URL, `http://localhost:${PORT}`]
-            : true;
-        
-        if (allowedOrigins === true || allowedOrigins.includes(origin)) {
+
+        const normalizedOrigin = normalizeOrigin(origin);
+        const isLocalOrigin = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(normalizedOrigin);
+        const isVercelOrigin = /^https:\/\/[^/]+\.vercel\.app$/i.test(normalizedOrigin);
+        const allowUnconfiguredDevelopmentOrigin = !process.env.FRONTEND_URL && process.env.NODE_ENV !== 'production';
+
+        if (configuredOrigins.includes(normalizedOrigin) || isLocalOrigin || isVercelOrigin || allowUnconfiguredDevelopmentOrigin) {
             return callback(null, true);
         }
-        
-        // Allow any localhost origin for development
-        if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
-            return callback(null, true);
-        }
-        
+
         callback(new Error('Not allowed by CORS'));
     },
     credentials: true,

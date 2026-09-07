@@ -194,11 +194,16 @@ exports.getMapDonations = async (req, res) => {
                 const coords = await resolveCoords(d);
                 mapped.push({
                     id: d._id,
+                    _id: d._id,
                     foodName: d.foodName,
                     quantity: d.quantity,
                     location: d.location || d.address,
                     address: d.address,
+                    country: d.country || 'India',
                     city: d.city,
+                    town: d.town,
+                    village: d.village,
+                    locality: d.locality,
                     district: d.district,
                     state: d.state,
                     pincode: d.pincode,
@@ -232,11 +237,16 @@ exports.getMapDonations = async (req, res) => {
         const coords = await resolveCoords(d);
         return {
             id: d._id,
+            _id: d._id,
             foodName: d.foodName,
             quantity: d.quantity,
             location: d.location || d.address,
             address: d.address,
+            country: d.country || 'India',
             city: d.city,
+            town: d.town,
+            village: d.village,
+            locality: d.locality,
             district: d.district,
             state: d.state,
             pincode: d.pincode,
@@ -537,6 +547,31 @@ exports.searchLocations = async (req, res) => {
                 }
             });
 
+            const addressMatches = await Donation.find({
+                $or: [
+                    { address: regex },
+                    { location: regex },
+                    { locality: regex },
+                    { village: regex },
+                    { town: regex },
+                    { pincode: regex }
+                ]
+            }).select('address location locality village town pincode city district state latitude longitude').limit(10).lean();
+            addressMatches.forEach(d => {
+                const name = d.locality || d.village || d.town || d.address || d.location || d.pincode;
+                if (name && !results.some(r => r.type === 'address' && r.name === name)) {
+                    results.push({
+                        type: 'address',
+                        name,
+                        state: d.state || '',
+                        district: d.district || '',
+                        lat: Number.isFinite(d.latitude) ? d.latitude : undefined,
+                        lng: Number.isFinite(d.longitude) ? d.longitude : undefined,
+                        count: 1
+                    });
+                }
+            });
+
             // ─── 2. If no database matches, try Nominatim forward geocoding ───
             if (results.length === 0) {
                 const coords = await geocodeAddress(q);
@@ -549,6 +584,9 @@ exports.searchLocations = async (req, res) => {
                         count: 0
                     });
                 }
+            } else if (!results.some(result => Number.isFinite(result.lat) && Number.isFinite(result.lng))) {
+                const coords = await geocodeAddress(q);
+                if (coords) results[0] = { ...results[0], lat: coords.lat, lng: coords.lng };
             }
 
             return res.json(results.slice(0, 25));

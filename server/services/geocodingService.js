@@ -204,9 +204,9 @@ async function geocodeAddress(locationData) {
             query = locationData;
             fallbackString = locationData;
         } else if (locationData && typeof locationData === 'object') {
-            const { address, city, district, state, pincode } = locationData;
-            query = buildQuery([address, city, district, state, pincode, 'India']);
-            fallbackString = buildQuery([city, district, state, address]);
+            const { address, country, city, town, village, locality, district, state, pincode } = locationData;
+            query = buildQuery([address, locality, village, town, city, district, state, pincode, country || 'India']);
+            fallbackString = buildQuery([locality, village, town, city, district, state, address]);
         }
 
         // 1. Try Nominatim first
@@ -230,6 +230,9 @@ async function geocodeAddress(locationData) {
         const cityCoords = lookupCityCoords(
             typeof locationData === 'string' ? locationData : buildQuery([
                 locationData && locationData.city,
+                locationData && locationData.town,
+                locationData && locationData.village,
+                locationData && locationData.locality,
                 locationData && locationData.district,
                 locationData && locationData.state,
                 locationData && locationData.address

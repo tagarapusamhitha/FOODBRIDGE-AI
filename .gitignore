@@ -7,6 +7,10 @@ node_modules/
 .env.production
 .env.development
 *.env
+server/.env
+
+# Vercel
+.vercel/
 
 # Logs
 logs/

@@ -98,7 +98,7 @@ exports.createDonation = async (req, res) => {
 
     const {
         foodName, quantity, location, expiry, expiryDate,
-        category, address, city, district, state, pincode,
+        category, address, country, city, town, village, locality, district, state, pincode,
         latitude, longitude, imageUrl
     } = req.body;
 
@@ -106,7 +106,7 @@ exports.createDonation = async (req, res) => {
     let lat = latitude || null;
     let lng = longitude || null;
     if (!lat || !lng) {
-        const locationObj = { address: address || location, city, district, state, pincode };
+        const locationObj = { address: address || location, country, city, town, village, locality, district, state, pincode };
         const coords = await geocodeAddress(locationObj);
         if (coords) {
             lat = coords.lat;
@@ -135,7 +135,11 @@ exports.createDonation = async (req, res) => {
                 quantity,
                 location: location || address || '',
                 address: address || location || '',
+                country: country || 'India',
                 city: city || '',
+                town: town || '',
+                village: village || '',
+                locality: locality || '',
                 district: district || '',
                 state: state || '',
                 pincode: pincode || '',
@@ -176,7 +180,11 @@ exports.createDonation = async (req, res) => {
         quantity,
         location: location || address || '',
         address: address || location || '',
+        country: country || 'India',
         city: city || '',
+        town: town || '',
+        village: village || '',
+        locality: locality || '',
         district: district || '',
         state: state || '',
         pincode: pincode || '',

@@ -87,7 +87,7 @@ exports.signup = async (req, res) => {
         try {
             let userExists = await User.findOne({ email });
             if (userExists) {
-                return res.status(400).json({ error: 'User already exists with this email address' });
+                return res.status(400).json({ error: 'An account with this email already exists.' });
             }
 
             const user = await User.create({
@@ -129,7 +129,7 @@ exports.signup = async (req, res) => {
     // --- STANDBY IN-MEMORY MODE ---
     console.log('[STANDBY MODE] Processing signup in-memory');
     if (mockUsers.find(u => u.email.toLowerCase() === email.toLowerCase())) {
-        return res.status(400).json({ error: 'User already exists with this email address' });
+        return res.status(400).json({ error: 'An account with this email already exists.' });
     }
 
     try {
